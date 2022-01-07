@@ -1,0 +1,16 @@
+            Write("╔═════════════════════════════════════════════════════════════╗", xOffset, yOffset);
+            Write("║                                                             ║", xOffset, yOffset + 1); 
+            Write("║                                                             ║", xOffset, yOffset + 2); 
+            Write("║                                                             ║", xOffset, yOffset + 3); 
+            Write("║                                                             ║", xOffset, yOffset + 4); 
+            Write("║                                                             ║", xOffset, yOffset + 5); 
+            Write("║                                                             ║", xOffset, yOffset + 6);
+            Write("║                                                             ║", xOffset, yOffset + 7); 
+            Write("║                                                             ║", xOffset, yOffset + 8);                 
+            Write("║                                                             ║", xOffset, yOffset + 9);
+            Write("║                                                             ║", xOffset, yOffset + 10); 
+            Write("║                                                             ║", xOffset, yOffset + 11); 
+            Write("║                                                             ║", xOffset, yOffset + 12); 
+            Write("║                                                             ║", xOffset, yOffset + 13); 
+            Write("║                                                             ║", xOffset, yOffset + 14); 
+            Write("╚═════════════════════════════════════════════════════════════╝", xOffset, yOffset + 15);

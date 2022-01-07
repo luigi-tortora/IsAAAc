@@ -99,24 +99,8 @@ namespace IsAAAc
         }
         public static void PrintRoom(int xOffset, int yOffset, bool up, bool right, bool down, bool left) 
         {
-            int width = 60;
+            int width = 62;
             int height = 15;
-            /*Write("╔═════════════════════════════════════════════════════════════╗", xOffset, yOffset);
-            Write("║                                                             ║", xOffset, yOffset + 1); 
-            Write("║                                                             ║", xOffset, yOffset + 2); 
-            Write("║                                                             ║", xOffset, yOffset + 3); 
-            Write("║                                                             ║", xOffset, yOffset + 4); 
-            Write("║                                                             ║", xOffset, yOffset + 5); 
-            Write("║                                                             ║", xOffset, yOffset + 6);
-            Write("║                                                             ║", xOffset, yOffset + 7); 
-            Write("║                                                             ║", xOffset, yOffset + 8);                 
-            Write("║                                                             ║", xOffset, yOffset + 9);
-            Write("║                                                             ║", xOffset, yOffset + 10); 
-            Write("║                                                             ║", xOffset, yOffset + 11); 
-            Write("║                                                             ║", xOffset, yOffset + 12); 
-            Write("║                                                             ║", xOffset, yOffset + 13); 
-            Write("║                                                             ║", xOffset, yOffset + 14); 
-            Write("╚═════════════════════════════════════════════════════════════╝", xOffset, yOffset + 15);*/
 
             Write("╔", xOffset, yOffset);
             
@@ -152,7 +136,7 @@ namespace IsAAAc
 
             if (down)
             {
-                Write("═══════", xOffset + 28, yOffset + 15, ConsoleColor.Black);
+                Write("═══════", xOffset + 28, yOffset + height, ConsoleColor.Black);
             }
 
             if (right) 
