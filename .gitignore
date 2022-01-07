@@ -1,14 +1,7 @@
-*.exe
-*.dll
-*.cache
-*.json
-*.pdb
-*.txt
-*.props
-*.target
-*.cache
-*.props
-*.json
-*.pdb
-*.dll
-*.exe
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+build/
+[Bb]in/
+[Oo]bj/
