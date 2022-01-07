@@ -44,28 +44,28 @@ namespace IsAAAc
 
                     switch (cK)
                     {
-                        case ConsoleKey.UpArrow:
+                        case ConsoleKey.W:
                         {
                             yBb--;
 
                             break;
                         }
 
-                        case ConsoleKey.DownArrow:
+                        case ConsoleKey.S:
                         {
                             yBb++;
 
                             break;
                         }
 
-                        case ConsoleKey.RightArrow:
+                        case ConsoleKey.D:
                         {
                             xBb++;
 
                             break;
                         }
 
-                        case ConsoleKey.LeftArrow:
+                        case ConsoleKey.A:
                         {
                             xBb--;
 
