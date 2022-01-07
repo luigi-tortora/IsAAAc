@@ -27,8 +27,8 @@ namespace IsAAAc
             Isaaac.PrintRoom(1, 17, true, true, false, false);
             Isaaac.PrintRoom(33, 17, true, false, false, true);*/
 
-            int xBb = 3;
-            int yBb = 3;
+            int xBb = 2;
+            int yBb = 2;
             const string bB = "♦";
 
             Isaaac.Write(bB, xBb, yBb, ConsoleColor.Cyan);
@@ -60,14 +60,14 @@ namespace IsAAAc
 
                         case ConsoleKey.RightArrow:
                         {
-                            xBb += 2;
+                            xBb++;
 
                             break;
                         }
 
                         case ConsoleKey.LeftArrow:
                         {
-                            xBb -= 2;
+                            xBb--;
 
                             break;
                         }
@@ -93,8 +93,8 @@ namespace IsAAAc
         WindowWidth: 240 WindowHeight: 63
         */
 
-        public const int Width = 63;
-        public const int Height = 16;
+        public const int Width = 30;
+        public const int Height = 10;
 
         public static void Write(string str, int left, int top, ConsoleColor fColor = ConsoleColor.Gray, ConsoleColor bColor = ConsoleColor.Black)
         {
@@ -109,47 +109,40 @@ namespace IsAAAc
 
         public static void PrintRoom(int xOffset, int yOffset, bool up, bool right, bool down, bool left) 
         {
-            Write("╔═════════════════════════════════════════════════════════════╗", xOffset, yOffset);
-            Write("║                                                             ║", xOffset, yOffset + 1);
-            Write("║                                                             ║", xOffset, yOffset + 2);
-            Write("║                                                             ║", xOffset, yOffset + 3);
-            Write("║                                                             ║", xOffset, yOffset + 4);
-            Write("║                                                             ║", xOffset, yOffset + 5);
-            Write("║                                                             ║", xOffset, yOffset + 6);
-            Write("║                                                             ║", xOffset, yOffset + 7);
-            Write("║                                                             ║", xOffset, yOffset + 8);
-            Write("║                                                             ║", xOffset, yOffset + 9);
-            Write("║                                                             ║", xOffset, yOffset + 10);
-            Write("║                                                             ║", xOffset, yOffset + 11);
-            Write("║                                                             ║", xOffset, yOffset + 12);
-            Write("║                                                             ║", xOffset, yOffset + 13);
-            Write("║                                                             ║", xOffset, yOffset + 14);
-            Write("╚═════════════════════════════════════════════════════════════╝", xOffset, yOffset + 15);
+            const int DoorWidth = 8;
+            const int DoorHeight = DoorWidth / 2;
+
+            Write("╔" + new String('═', Width - 2) + "╗", xOffset, yOffset);
+            for (var i = 1; i <= Height - 2; i++)
+            {
+                Write("║" + new String(' ', Width - 2) + "║", xOffset, yOffset + i);
+            }
+            Write("╚" + new String('═', Width - 2) + "╝", xOffset, yOffset + Height - 1);
 
             if (up)
             {
-                Write("═══════", xOffset + 28, yOffset, ConsoleColor.Black);
+                Write(new String('═', DoorWidth), xOffset + Width / 2 - DoorWidth / 2, yOffset, ConsoleColor.Black);
             }
 
             if (down)
             {
-                Write("═══════", xOffset + 28, yOffset + 15, ConsoleColor.Black);
+                Write(new String('═', DoorWidth), xOffset + Width / 2 - DoorWidth / 2, yOffset + Height - 1, ConsoleColor.Black);
             }
 
             if (right)
             {
-                Write("║", xOffset + 62, yOffset + 7, ConsoleColor.Black);
-                Write("║", xOffset + 62, yOffset + 8, ConsoleColor.Black);
-                Write("║", xOffset + 62, yOffset + 6, ConsoleColor.Black);
-                Write("║", xOffset + 62, yOffset + 9, ConsoleColor.Black);
+                for (int i = 0; i < DoorHeight; i++)
+                {
+                    Write("║", xOffset + Width - 1, yOffset + Height / 2 - DoorHeight / 2 + i, ConsoleColor.Black);
+                }
             }
 
             if (left)
             {
-                Write("║", xOffset, yOffset + 6, ConsoleColor.Black);
-                Write("║", xOffset, yOffset + 7, ConsoleColor.Black);
-                Write("║", xOffset, yOffset + 8, ConsoleColor.Black);
-                Write("║", xOffset, yOffset + 9, ConsoleColor.Black);
+                for (int i = 0; i < DoorHeight; i++)
+                {
+                    Write("║", xOffset, yOffset + Height / 2 - DoorHeight / 2 + i, ConsoleColor.Black);
+                }
             }
         }
     }
