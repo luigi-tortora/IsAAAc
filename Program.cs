@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace IsAAAc
 {
@@ -20,13 +21,61 @@ namespace IsAAAc
             Console.BufferHeight = Console.WindowHeight;
 
             Console.Clear();
-        
+                    
             PrintRoom(1, 1, false, true, true, false);
             PrintRoom(33, 1, false, false, true, true);
             PrintRoom(1, 17, true, true, false, false);
             PrintRoom(33, 17, true, false, false, true);
 
-            Console.ReadKey();
+            int xBb = 3;
+            int yBb = 3;
+            const string bB = "♦";
+
+            Write(bB, xBb, yBb, ConsoleColor.Cyan);
+
+            while (true)
+            {
+                if (Console.KeyAvailable)
+                {
+                    ConsoleKey cK = Console.ReadKey(true).Key;
+                    ThreadPool.QueueUserWorkItem((_) => {while (Console.KeyAvailable) Console.ReadKey(true); });
+                    Write(bB, xBb, yBb, ConsoleColor.Black);
+
+                    switch (cK)
+                    {
+                        case ConsoleKey.UpArrow:
+                        {
+                            yBb--;
+                            break;
+                        }
+
+                        case ConsoleKey.DownArrow:
+                        {
+                            yBb++;
+                            break;
+                        }
+
+                        case ConsoleKey.RightArrow:
+                        {
+                            xBb += 2;
+                            break;
+                        }
+
+                        case ConsoleKey.LeftArrow:
+                        {
+                            xBb -= 2;
+                            break;
+                        }
+
+                        case ConsoleKey.Escape:
+                        {
+                            return;
+                        }
+                    }
+                    Write(bB, xBb, yBb, ConsoleColor.Cyan);
+                }
+                Thread.Sleep(33);
+            }
         }
 
         private static void Write(string str, int left, int top, ConsoleColor fColor = ConsoleColor.Gray, ConsoleColor bColor = ConsoleColor.Black)

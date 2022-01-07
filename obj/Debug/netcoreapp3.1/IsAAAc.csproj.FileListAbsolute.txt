@@ -1,0 +1,13 @@
+C:\Users\luigi\Documents\GitHub\IsAAAc\bin\Debug\netcoreapp3.1\IsAAAc.exe
+C:\Users\luigi\Documents\GitHub\IsAAAc\bin\Debug\netcoreapp3.1\IsAAAc.deps.json
+C:\Users\luigi\Documents\GitHub\IsAAAc\bin\Debug\netcoreapp3.1\IsAAAc.runtimeconfig.json
+C:\Users\luigi\Documents\GitHub\IsAAAc\bin\Debug\netcoreapp3.1\IsAAAc.runtimeconfig.dev.json
+C:\Users\luigi\Documents\GitHub\IsAAAc\bin\Debug\netcoreapp3.1\IsAAAc.dll
+C:\Users\luigi\Documents\GitHub\IsAAAc\bin\Debug\netcoreapp3.1\IsAAAc.pdb
+C:\Users\luigi\Documents\GitHub\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.csprojAssemblyReference.cache
+C:\Users\luigi\Documents\GitHub\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.AssemblyInfoInputs.cache
+C:\Users\luigi\Documents\GitHub\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.AssemblyInfo.cs
+C:\Users\luigi\Documents\GitHub\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.csproj.CoreCompileInputs.cache
+C:\Users\luigi\Documents\GitHub\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.dll
+C:\Users\luigi\Documents\GitHub\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.pdb
+C:\Users\luigi\Documents\GitHub\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.genruntimeconfig.cache
