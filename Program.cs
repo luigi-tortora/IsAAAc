@@ -11,17 +11,17 @@ namespace IsAAAc
 
             Console.OutputEncoding = System.Text.Encoding.Unicode;
             Console.CursorVisible = false;
-            
-            Console.SetWindowPosition(0,0);
-            
-            Console.WindowWidth = Isaaac.width;
-            Console.WindowHeight = Isaaac.height;
-            
+
+            Console.SetWindowPosition(0, 0);
+
+            Console.WindowWidth = Isaaac.Width + 2;
+            Console.WindowHeight = Isaaac.Height + 2;
+
             Console.BufferWidth = Console.WindowWidth;
             Console.BufferHeight = Console.WindowHeight;
 
             Console.Clear();
-                    
+
             Isaaac.PrintRoom(1, 1, true, true, true, true);
             /*Isaaac.PrintRoom(33, 1, false, false, true, true);
             Isaaac.PrintRoom(1, 17, true, true, false, false);
@@ -39,6 +39,7 @@ namespace IsAAAc
                 {
                     ConsoleKey cK = Console.ReadKey(true).Key;
                     ThreadPool.QueueUserWorkItem((_) => {while (Console.KeyAvailable) Console.ReadKey(true); });
+
                     Isaaac.Write(bB, xBb, yBb, ConsoleColor.Black);
 
                     switch (cK)
@@ -46,24 +47,28 @@ namespace IsAAAc
                         case ConsoleKey.UpArrow:
                         {
                             yBb--;
+
                             break;
                         }
 
                         case ConsoleKey.DownArrow:
                         {
                             yBb++;
+
                             break;
                         }
 
                         case ConsoleKey.RightArrow:
                         {
                             xBb += 2;
+
                             break;
                         }
 
                         case ConsoleKey.LeftArrow:
                         {
                             xBb -= 2;
+
                             break;
                         }
 
@@ -72,8 +77,10 @@ namespace IsAAAc
                             return;
                         }
                     }
+
                     Isaaac.Write(bB, xBb, yBb, ConsoleColor.Cyan);
                 }
+
                 Thread.Sleep(33);
             }
         }
@@ -83,10 +90,12 @@ namespace IsAAAc
     {
         /*
         LIMITI BUFFER FINESTRA (1920PX * 1080PX) CONSOLE
-        WIDTH: 240 HEIGHT: 63
+        WindowWidth: 240 WindowHeight: 63
         */
-        public const int width = 64;
-        public const int height = 16;
+
+        public const int Width = 63;
+        public const int Height = 16;
+
         public static void Write(string str, int left, int top, ConsoleColor fColor = ConsoleColor.Gray, ConsoleColor bColor = ConsoleColor.Black)
         {
             Console.ForegroundColor = fColor;
@@ -97,65 +106,50 @@ namespace IsAAAc
 
             Console.ResetColor();
         }
+
         public static void PrintRoom(int xOffset, int yOffset, bool up, bool right, bool down, bool left) 
         {
-            int widthRoom = width - 2;
-            int heightRoom = height - 2;
-
-            Write("╔", xOffset, yOffset);
-            
-            for (int i = 1; i < widthRoom; i++)
-            {
-                Write("═", xOffset + i, yOffset);
-
-                for (int j = 0; j < widthRoom; j++)
-                {
-                    Write("═", xOffset + i, yOffset + heightRoom);
-                }
-            }
-
-            Write("╗", xOffset + widthRoom, yOffset);
-
-            for (int i = 1; i < heightRoom; i++)
-            {
-                Write("║", xOffset, yOffset + i);
-
-                for (int j = 1; j < heightRoom; j++)
-                {
-                    Write("║", xOffset + widthRoom, yOffset + i);
-                }
-            }
-
-            Write("╚", xOffset, yOffset + heightRoom);         
-            Write("╝", xOffset + widthRoom, yOffset + heightRoom);     
-
-            int xDoor = (widthRoom - 8) / 2;  
-            int yDoor = (heightRoom - 4) / 2;  
+            Write("╔═════════════════════════════════════════════════════════════╗", xOffset, yOffset);
+            Write("║                                                             ║", xOffset, yOffset + 1);
+            Write("║                                                             ║", xOffset, yOffset + 2);
+            Write("║                                                             ║", xOffset, yOffset + 3);
+            Write("║                                                             ║", xOffset, yOffset + 4);
+            Write("║                                                             ║", xOffset, yOffset + 5);
+            Write("║                                                             ║", xOffset, yOffset + 6);
+            Write("║                                                             ║", xOffset, yOffset + 7);
+            Write("║                                                             ║", xOffset, yOffset + 8);
+            Write("║                                                             ║", xOffset, yOffset + 9);
+            Write("║                                                             ║", xOffset, yOffset + 10);
+            Write("║                                                             ║", xOffset, yOffset + 11);
+            Write("║                                                             ║", xOffset, yOffset + 12);
+            Write("║                                                             ║", xOffset, yOffset + 13);
+            Write("║                                                             ║", xOffset, yOffset + 14);
+            Write("╚═════════════════════════════════════════════════════════════╝", xOffset, yOffset + 15);
 
             if (up)
             {
-                Write("════════", xOffset + xDoor, yOffset - 1, ConsoleColor.Black);
+                Write("═══════", xOffset + 28, yOffset, ConsoleColor.Black);
             }
 
             if (down)
             {
-                Write("════════", xOffset + xDoor, yOffset + heightRoom - 1, ConsoleColor.Black);
+                Write("═══════", xOffset + 28, yOffset + 15, ConsoleColor.Black);
             }
 
-            if (right) 
+            if (right)
             {
-                Write("║", xOffset + widthRoom, yOffset + yDoor, ConsoleColor.Black); 
-                Write("║", xOffset + widthRoom, yOffset + yDoor + 1, ConsoleColor.Black);                 
-                Write("║", xOffset + widthRoom, yOffset + yDoor + 2, ConsoleColor.Black);
-                Write("║", xOffset + widthRoom, yOffset + yDoor + 3, ConsoleColor.Black);
+                Write("║", xOffset + 62, yOffset + 7, ConsoleColor.Black);
+                Write("║", xOffset + 62, yOffset + 8, ConsoleColor.Black);
+                Write("║", xOffset + 62, yOffset + 6, ConsoleColor.Black);
+                Write("║", xOffset + 62, yOffset + 9, ConsoleColor.Black);
             }
 
-            if (left) 
+            if (left)
             {
-                Write("║", xOffset, yOffset + yDoor, ConsoleColor.Black);
-                Write("║", xOffset, yOffset + yDoor + 1, ConsoleColor.Black); 
-                Write("║", xOffset, yOffset + yDoor + 2, ConsoleColor.Black);                 
-                Write("║", xOffset, yOffset + yDoor + 3, ConsoleColor.Black);
+                Write("║", xOffset, yOffset + 6, ConsoleColor.Black);
+                Write("║", xOffset, yOffset + 7, ConsoleColor.Black);
+                Write("║", xOffset, yOffset + 8, ConsoleColor.Black);
+                Write("║", xOffset, yOffset + 9, ConsoleColor.Black);
             }
         }
     }
