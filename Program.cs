@@ -99,7 +99,9 @@ namespace IsAAAc
         }
         public static void PrintRoom(int xOffset, int yOffset, bool up, bool right, bool down, bool left) 
         {
-            Write("╔═════════════════════════════════════════════════════════════╗", xOffset, yOffset);
+            int width = 60;
+            int height = 15;
+            /*Write("╔═════════════════════════════════════════════════════════════╗", xOffset, yOffset);
             Write("║                                                             ║", xOffset, yOffset + 1); 
             Write("║                                                             ║", xOffset, yOffset + 2); 
             Write("║                                                             ║", xOffset, yOffset + 3); 
@@ -114,7 +116,34 @@ namespace IsAAAc
             Write("║                                                             ║", xOffset, yOffset + 12); 
             Write("║                                                             ║", xOffset, yOffset + 13); 
             Write("║                                                             ║", xOffset, yOffset + 14); 
-            Write("╚═════════════════════════════════════════════════════════════╝", xOffset, yOffset + 15);
+            Write("╚═════════════════════════════════════════════════════════════╝", xOffset, yOffset + 15);*/
+
+            Write("╔", xOffset, yOffset);
+            
+            for (int i = 0; i < width; i++)
+            {
+                Write("═", xOffset + 1 + i, yOffset);
+
+                for (int j = 0; j < width; j++)
+                {
+                    Write("═", xOffset + 1 + i, yOffset + height);
+                }
+            }
+
+            Write("╗", xOffset + width, yOffset);
+
+            for (int i = 0; i < height; i++)
+            {
+                Write("║", xOffset, yOffset + 1 + i);
+
+                for (int j = 0; j < height; j++)
+                {
+                    Write("║", xOffset + width, yOffset + 1 + i);
+                }
+            }
+
+            Write("╚", xOffset, yOffset + height);         
+            Write("╝", xOffset + width, yOffset + height);         
 
             if (up)
             {
@@ -128,10 +157,10 @@ namespace IsAAAc
 
             if (right) 
             {
-                Write("║", xOffset + 62, yOffset + 7, ConsoleColor.Black); 
-                Write("║", xOffset + 62, yOffset + 8, ConsoleColor.Black);                 
-                Write("║", xOffset + 62, yOffset + 6, ConsoleColor.Black);
-                Write("║", xOffset + 62, yOffset + 9, ConsoleColor.Black);
+                Write("║", xOffset + width, yOffset + 7, ConsoleColor.Black); 
+                Write("║", xOffset + width, yOffset + 8, ConsoleColor.Black);                 
+                Write("║", xOffset + width, yOffset + 6, ConsoleColor.Black);
+                Write("║", xOffset + width, yOffset + 9, ConsoleColor.Black);
             }
 
             if (left) 
