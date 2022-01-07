@@ -22,7 +22,7 @@ namespace IsAAAc
 
             Console.Clear();
                     
-            Isaaac.PrintRoom(2, 2, true, true, true, true);
+            Isaaac.PrintRoom(1, 1, true, true, true, true);
             /*Isaaac.PrintRoom(33, 1, false, false, true, true);
             Isaaac.PrintRoom(1, 17, true, true, false, false);
             Isaaac.PrintRoom(33, 17, true, false, false, true);*/
@@ -85,8 +85,8 @@ namespace IsAAAc
         LIMITI BUFFER FINESTRA (1920PX * 1080PX) CONSOLE
         WIDTH: 240 HEIGHT: 63
         */
-        public const int width = 65;
-        public const int height = 35;
+        public const int width = 64;
+        public const int height = 16;
         public static void Write(string str, int left, int top, ConsoleColor fColor = ConsoleColor.Gray, ConsoleColor bColor = ConsoleColor.Black)
         {
             Console.ForegroundColor = fColor;
@@ -134,12 +134,12 @@ namespace IsAAAc
 
             if (up)
             {
-                Write("════════", xOffset + xDoor, yOffset, ConsoleColor.Black);
+                Write("════════", xOffset + xDoor, yOffset - 1, ConsoleColor.Black);
             }
 
             if (down)
             {
-                Write("════════", xOffset + xDoor, yOffset + heightRoom, ConsoleColor.Black);
+                Write("════════", xOffset + xDoor, yOffset + heightRoom - 1, ConsoleColor.Black);
             }
 
             if (right) 
