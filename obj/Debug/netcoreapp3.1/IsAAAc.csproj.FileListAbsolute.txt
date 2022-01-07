@@ -11,3 +11,16 @@ C:\Users\luigi\Documents\GitHub\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.csproj.Cor
 C:\Users\luigi\Documents\GitHub\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.dll
 C:\Users\luigi\Documents\GitHub\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.pdb
 C:\Users\luigi\Documents\GitHub\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.genruntimeconfig.cache
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.csprojAssemblyReference.cache
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.AssemblyInfoInputs.cache
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.AssemblyInfo.cs
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.csproj.CoreCompileInputs.cache
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.dll
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.pdb
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\bin\Debug\netcoreapp3.1\IsAAAc.exe
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\bin\Debug\netcoreapp3.1\IsAAAc.deps.json
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\bin\Debug\netcoreapp3.1\IsAAAc.runtimeconfig.json
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\bin\Debug\netcoreapp3.1\IsAAAc.runtimeconfig.dev.json
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\bin\Debug\netcoreapp3.1\IsAAAc.dll
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\bin\Debug\netcoreapp3.1\IsAAAc.pdb
+J:\Progetto IsAAAc\Repository IsAAAc\IsAAAc\obj\Debug\netcoreapp3.1\IsAAAc.genruntimeconfig.cache

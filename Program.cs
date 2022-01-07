@@ -14,24 +14,24 @@ namespace IsAAAc
             
             Console.SetWindowPosition(0,0);
             
-            Console.WindowWidth = 65;
-            Console.WindowHeight = 35;
+            Console.WindowWidth = Isaaac.width;
+            Console.WindowHeight = Isaaac.height;
             
             Console.BufferWidth = Console.WindowWidth;
             Console.BufferHeight = Console.WindowHeight;
 
             Console.Clear();
                     
-            PrintRoom(1, 1, false, true, true, false);
-            PrintRoom(33, 1, false, false, true, true);
-            PrintRoom(1, 17, true, true, false, false);
-            PrintRoom(33, 17, true, false, false, true);
+            Isaaac.PrintRoom(1, 1, false, true, true, false);
+            Isaaac.PrintRoom(33, 1, false, false, true, true);
+            Isaaac.PrintRoom(1, 17, true, true, false, false);
+            Isaaac.PrintRoom(33, 17, true, false, false, true);
 
             int xBb = 3;
             int yBb = 3;
             const string bB = "♦";
 
-            Write(bB, xBb, yBb, ConsoleColor.Cyan);
+            Isaaac.Write(bB, xBb, yBb, ConsoleColor.Cyan);
 
             while (true)
             {
@@ -39,7 +39,7 @@ namespace IsAAAc
                 {
                     ConsoleKey cK = Console.ReadKey(true).Key;
                     ThreadPool.QueueUserWorkItem((_) => {while (Console.KeyAvailable) Console.ReadKey(true); });
-                    Write(bB, xBb, yBb, ConsoleColor.Black);
+                    Isaaac.Write(bB, xBb, yBb, ConsoleColor.Black);
 
                     switch (cK)
                     {
@@ -72,13 +72,22 @@ namespace IsAAAc
                             return;
                         }
                     }
-                    Write(bB, xBb, yBb, ConsoleColor.Cyan);
+                    Isaaac.Write(bB, xBb, yBb, ConsoleColor.Cyan);
                 }
                 Thread.Sleep(33);
             }
         }
+    }
 
-        private static void Write(string str, int left, int top, ConsoleColor fColor = ConsoleColor.Gray, ConsoleColor bColor = ConsoleColor.Black)
+    public static class Isaaac
+    {
+        /*
+        LIMITI BUFFER FINESTRA (1920PX * 1080PX) CONSOLE
+        WIDTH: 240 HEIGHT: 63
+        */
+        public const int width = 65;
+        public const int height = 35;
+        public static void Write(string str, int left, int top, ConsoleColor fColor = ConsoleColor.Gray, ConsoleColor bColor = ConsoleColor.Black)
         {
             Console.ForegroundColor = fColor;
             Console.BackgroundColor = bColor;
@@ -88,8 +97,7 @@ namespace IsAAAc
 
             Console.ResetColor();
         }
-
-        private static void PrintRoom(int xOffset, int yOffset, bool up, bool right, bool down, bool left) 
+        public static void PrintRoom(int xOffset, int yOffset, bool up, bool right, bool down, bool left) 
         {
             Write("╔═════════════════════════════╗", xOffset, yOffset);
             Write("║                             ║", xOffset, yOffset + 1); 
