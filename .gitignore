@@ -1,2 +1,14 @@
-
+*.exe
+*.dll
 *.cache
+*.json
+*.pdb
+*.txt
+*.props
+*.target
+*.cache
+*.props
+*.json
+*.pdb
+*.dll
+*.exe
