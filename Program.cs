@@ -44,28 +44,28 @@ namespace IsAAAc
 
                     switch (cK)
                     {
-                        case ConsoleKey.UpArrow:
+                        case ConsoleKey.W:
                         {
                             yBb = Math.Clamp(--yBb, 2, Isaaac.Height - 1);
 
                             break;
                         }
 
-                        case ConsoleKey.DownArrow:
+                        case ConsoleKey.S:
                         {
                             yBb = Math.Clamp(++yBb, 2, Isaaac.Height - 1);
 
                             break;
                         }
 
-                        case ConsoleKey.RightArrow:
+                        case ConsoleKey.D:
                         {
                             xBb = Math.Clamp(++xBb, 2, Isaaac.Width - 1);
 
                             break;
                         }
 
-                        case ConsoleKey.LeftArrow:
+                        case ConsoleKey.A:
                         {
                             xBb = Math.Clamp(--xBb, 2, Isaaac.Width - 1);
 
