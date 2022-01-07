@@ -46,28 +46,28 @@ namespace IsAAAc
                     {
                         case ConsoleKey.UpArrow:
                         {
-                            yBb--;
+                            yBb = Math.Clamp(--yBb, 2, Isaaac.Height - 1);
 
                             break;
                         }
 
                         case ConsoleKey.DownArrow:
                         {
-                            yBb++;
+                            yBb = Math.Clamp(++yBb, 2, Isaaac.Height - 1);
 
                             break;
                         }
 
                         case ConsoleKey.RightArrow:
                         {
-                            xBb++;
+                            xBb = Math.Clamp(++xBb, 2, Isaaac.Width - 1);
 
                             break;
                         }
 
                         case ConsoleKey.LeftArrow:
                         {
-                            xBb--;
+                            xBb = Math.Clamp(--xBb, 2, Isaaac.Width - 1);
 
                             break;
                         }
@@ -93,8 +93,8 @@ namespace IsAAAc
         WindowWidth: 240 WindowHeight: 63
         */
 
-        public const int Width = 30;
-        public const int Height = 10;
+        public const int Width = 60;
+        public const int Height = 20;
 
         public static void Write(string str, int left, int top, ConsoleColor fColor = ConsoleColor.Gray, ConsoleColor bColor = ConsoleColor.Black)
         {
