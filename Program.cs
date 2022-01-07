@@ -22,7 +22,7 @@ namespace IsAAAc
 
             Console.Clear();
                     
-            Isaaac.PrintRoom(1, 1, true, true, true, true);
+            Isaaac.PrintRoom(2, 2, true, true, true, true);
             /*Isaaac.PrintRoom(33, 1, false, false, true, true);
             Isaaac.PrintRoom(1, 17, true, true, false, false);
             Isaaac.PrintRoom(33, 17, true, false, false, true);*/
@@ -85,8 +85,8 @@ namespace IsAAAc
         LIMITI BUFFER FINESTRA (1920PX * 1080PX) CONSOLE
         WIDTH: 240 HEIGHT: 63
         */
-        public const int width = 66;
-        public const int height = 16;
+        public const int width = 65;
+        public const int height = 35;
         public static void Write(string str, int left, int top, ConsoleColor fColor = ConsoleColor.Gray, ConsoleColor bColor = ConsoleColor.Black)
         {
             Console.ForegroundColor = fColor;
@@ -104,25 +104,25 @@ namespace IsAAAc
 
             Write("╔", xOffset, yOffset);
             
-            for (int i = 0; i < widthRoom; i++)
+            for (int i = 1; i < widthRoom; i++)
             {
-                Write("═", xOffset + 1 + i, yOffset);
+                Write("═", xOffset + i, yOffset);
 
                 for (int j = 0; j < widthRoom; j++)
                 {
-                    Write("═", xOffset + 1 + i, yOffset + heightRoom);
+                    Write("═", xOffset + i, yOffset + heightRoom);
                 }
             }
 
             Write("╗", xOffset + widthRoom, yOffset);
 
-            for (int i = 0; i < heightRoom; i++)
+            for (int i = 1; i < heightRoom; i++)
             {
-                Write("║", xOffset, yOffset + 1 + i);
+                Write("║", xOffset, yOffset + i);
 
-                for (int j = 0; j < heightRoom; j++)
+                for (int j = 1; j < heightRoom; j++)
                 {
-                    Write("║", xOffset + widthRoom, yOffset + 1 + i);
+                    Write("║", xOffset + widthRoom, yOffset + i);
                 }
             }
 
