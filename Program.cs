@@ -23,12 +23,13 @@ namespace IsAAAc
 
             Console.Clear();
 
-            IsAAAc.PrintRoom(1, 1, true, true, true, true);
+            IsAAAc.PrintRoom(1, 1, up: true, right: true, down: true, left: true);
 
-            CellType[,] playField = new CellType[IsAAAc.Height - 2, IsAAAc.Width - 2];
+            CellInfo[,] playField = new CellInfo[IsAAAc.Height - 2, IsAAAc.Width - 2];
+            IsAAAc.InitPlayField(playField);
 
             IsAAAc.PlaceObstacle(playField, 10);
-            IsAAAc.PlacePlayer(playField);
+            IsAAAc.PlacePlayer(playField, id: 0);
 
             IsAAAc.PrintPlayField(playField);
 
@@ -43,34 +44,34 @@ namespace IsAAAc
                 if (Console.KeyAvailable)
                 {
                     ConsoleKey cK = Console.ReadKey(true).Key;
-                    ThreadPool.QueueUserWorkItem((_) => { while (Console.KeyAvailable) Console.ReadKey(true); });
+                    ThreadPool.QueueUserWorkItem((_) => { while (Console.KeyAvailable && Console.ReadKey(true).Key == cK); });
 
                     switch (cK)
                     {
                         case ConsoleKey.W:
                         {
-                            IsAAAc.MovePlayer(playField, MoveType.Up);
+                            IsAAAc.MovePlayer(playField, id: 0, Direction.Up);
 
                             break;
                         }
 
                         case ConsoleKey.S:
                         {
-                            IsAAAc.MovePlayer(playField, MoveType.Down);
+                            IsAAAc.MovePlayer(playField, id: 0, Direction.Down);
 
                             break;
                         }
 
                         case ConsoleKey.A:
                         {
-                            IsAAAc.MovePlayer(playField, MoveType.Left);
+                            IsAAAc.MovePlayer(playField, id: 0, Direction.Left);
 
                             break;
                         }
 
                         case ConsoleKey.D:
                         {
-                            IsAAAc.MovePlayer(playField, MoveType.Right);
+                            IsAAAc.MovePlayer(playField, id: 0, Direction.Right);
 
                             break;
                         }
@@ -93,9 +94,44 @@ namespace IsAAAc
         }
     }
 
-    public enum CellType { Obstacle = -2, Bullet, Empty, Player }
+    public class CellInfo : IEquatable<CellInfo>
+    {
+        public int Id { get; set; }
+        public CellType CellType { get; set; }
+        public Direction Direction { get; set; }
 
-    public enum MoveType { Up, Right, Down, Left }
+        public CellInfo(int id = 0, CellType cellType = CellType.Empty, Direction direction = Direction.None)
+        {
+            Id = id;
+            CellType = cellType;
+            Direction = direction;
+        }
+
+        public void Set(int id = 0, CellType cellType = CellType.Empty, Direction direction = Direction.None)
+        {
+            Id = id;
+            CellType = cellType;
+            Direction = direction;
+        }
+
+        public void Set(CellInfo cellInfo)
+        {
+            Id = cellInfo.Id;
+            CellType = cellInfo.CellType;
+            Direction = cellInfo.Direction;
+        }
+
+        public override bool Equals(object obj) => obj is CellInfo cellInfo && Equals(cellInfo);
+        public bool Equals(CellInfo cellInfo) => Id == cellInfo.Id && CellType == cellInfo.CellType && Direction == cellInfo.Direction;
+        public override int GetHashCode() => HashCode.Combine(Id, CellType, Direction);
+
+        public static bool operator ==(CellInfo lhs, CellInfo rhs) => lhs.Equals(rhs);
+        public static bool operator !=(CellInfo lhs, CellInfo rhs) => !lhs.Equals(rhs);
+    }
+
+    public enum CellType { Empty, Obstacle, Bullet, Player }
+
+    public enum Direction { None, Up, Right, Down, Left }
 
     public class IsAAAc
     {
@@ -146,7 +182,18 @@ namespace IsAAAc
             }
         }
 
-        public static void PlaceObstacle(CellType[,] playField, int count)
+        public static void InitPlayField(CellInfo[,] playField)
+        {
+            for (int y = 0; y < playField.GetLength(0); y++)
+            {
+                for (int x = 0; x < playField.GetLength(1); x++)
+                {
+                    playField[y, x] = new();
+                }
+            }
+        }
+
+        public static void PlaceObstacle(CellInfo[,] playField, int count)
         {
             Random rnd = new();
 
@@ -155,16 +202,16 @@ namespace IsAAAc
                 int y = rnd.Next(0, playField.GetLength(0));
                 int x = rnd.Next(0, playField.GetLength(1));
 
-                if (playField[y, x] == CellType.Empty)
+                if (playField[y, x].CellType == CellType.Empty)
                 {
-                    playField[y, x] = CellType.Obstacle;
+                    playField[y, x].Set(cellType: CellType.Obstacle);
 
                     count--;
                 }
             }
         }
 
-        public static void PlacePlayer(CellType[,] playField)
+        public static void PlacePlayer(CellInfo[,] playField, int id)
         {
             Random rnd = new();
 
@@ -173,47 +220,47 @@ namespace IsAAAc
                 int y = rnd.Next(0, playField.GetLength(0));
                 int x = rnd.Next(0, playField.GetLength(1));
 
-                if (playField[y, x] == CellType.Empty)
+                if (playField[y, x].CellType == CellType.Empty)
                 {
-                    playField[y, x] = CellType.Player;
+                    playField[y, x].Set(id, CellType.Player);
 
                     return;
                 }
             }
         }
 
-        public static void MovePlayer(CellType[,] playField, MoveType moveType)
+        public static void MovePlayer(CellInfo[,] playField, int id, Direction direction)
         {
             const int yInc = 1, xInc = 1;
 
-            (int y, int x) = FindPlayer(playField);
+            (int y, int x) = FindPlayer(playField, id);
 
             int yNew = y, xNew = x;
 
-            switch (moveType)
+            switch (direction)
             {
-                case MoveType.Up:
+                case Direction.Up:
                 {
                     yNew = y - yInc;
 
                     break;
                 }
 
-                case MoveType.Down:
+                case Direction.Down:
                 {
                     yNew = y + yInc;
 
                     break;
                 }
 
-                case MoveType.Left:
+                case Direction.Left:
                 {
                     xNew = x - xInc;
 
                     break;
                 }
 
-                case MoveType.Right:
+                case Direction.Right:
                 {
                     xNew = x + xInc;
 
@@ -225,24 +272,28 @@ namespace IsAAAc
             {
                 if (xNew >= 0 && xNew < playField.GetLength(1))
                 {
-                    if (playField[yNew, xNew] == CellType.Empty)
+                    if (playField[yNew, xNew].CellType == CellType.Empty)
                     {
-                        playField[y, x] = CellType.Empty;
-                        playField[yNew, xNew] = CellType.Player;
+                        playField[y, x].Set();
+
+                        playField[yNew, xNew].Set(id, CellType.Player);
                     }
                 }
             }
         }
 
-        private static (int y, int x) FindPlayer(CellType[,] playField)
+        private static (int y, int x) FindPlayer(CellInfo[,] playField, int id)
         {
             for (int y = 0; y < playField.GetLength(0); y++)
             {
                 for (int x = 0; x < playField.GetLength(1); x++)
                 {
-                    if (playField[y, x] == CellType.Player)
+                    if (playField[y, x].Id == id)
                     {
-                        return (y, x);
+                        if (playField[y, x].CellType == CellType.Player)
+                        {
+                            return (y, x);
+                        }
                     }
                 }
             }
@@ -250,11 +301,15 @@ namespace IsAAAc
             throw new Exception();
         }
 
-        private static CellType[,] _oldPlayField;
+        private static CellInfo[,] _oldPlayField;
 
-        public static void PrintPlayField(CellType[,] playField)
+        public static void PrintPlayField(CellInfo[,] playField)
         {
-            _oldPlayField ??= new CellType[playField.GetLength(0), playField.GetLength(1)];
+            if (_oldPlayField == null)
+            {
+                _oldPlayField = new CellInfo[playField.GetLength(0), playField.GetLength(1)];
+                IsAAAc.InitPlayField(_oldPlayField);
+            }
 
             lock (_oldPlayField)
             {
@@ -264,9 +319,9 @@ namespace IsAAAc
                     {
                         if (playField[y, x] != _oldPlayField[y, x])
                         {
-                            _oldPlayField[y, x] = playField[y, x];
+                            _oldPlayField[y, x].Set(playField[y, x]);
 
-                            switch (playField[y, x])
+                            switch (playField[y, x].CellType)
                             {
                                 case CellType.Obstacle:
                                 {
