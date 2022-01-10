@@ -8,6 +8,10 @@ namespace IsAAAc
     {
         public static void Main(string[] args)
         {
+            const int MaxWidth = 60;
+            const int MaxHeight = MaxWidth / 3; // Rectangle.
+            //public const int Height = Width / 2; // Square.
+
             Console.Title = "IsAAAc";
 
             Console.OutputEncoding = System.Text.Encoding.Unicode;
@@ -15,23 +19,45 @@ namespace IsAAAc
 
             Console.SetWindowPosition(0, 0);
 
-            Console.WindowWidth = Room.Width + 2;
-            Console.WindowHeight = Room.Height + 2;
+            Console.WindowWidth = MaxWidth + 2;
+            Console.WindowHeight = MaxHeight + 2;
 
             Console.BufferWidth = Console.WindowWidth;
             Console.BufferHeight = Console.WindowHeight;
 
             Console.Clear();
 
-            Room.Print(1, 1, true, true, true, true);
+            Random rnd = new();
 
-            CellInfo[,] playField = new CellInfo[Room.Height - 2, Room.Width - 2];
+            int width = rnd.Next(MaxHeight, MaxWidth);
+
+            if (width % 2 != 0)
+            {
+                width++;
+            }
+
+            int height = width / 3;
+
+            if (height % 2 != 0)
+            {
+                height++;
+            }
+
+            int maxPlayer = rnd.Next(3, 11);
+
+            int obstacles = (10 * width) / MaxWidth;
+
+            Room room = new(width, height, maxPlayer);
+
+            room.Print((MaxWidth - width) / 2, (MaxHeight - height) / 2, true, true, true, true);
+
+            CellInfo[,] playField = new CellInfo[room.Height - 2, room.Width - 2];
             PlayField.Init(playField);
 
-            PlayField.PlaceObstacle(playField, count: 10);
+            PlayField.PlaceObstacle(playField, count: obstacles);
             PlayField.PlacePlayer(playField, id: 0);
 
-            PlayField.Print(playField);
+            PlayField.Print(playField, (MaxWidth - width) / 2, (MaxHeight - height) / 2);
 
             Stopwatch sW = new();
 
@@ -84,7 +110,7 @@ namespace IsAAAc
                         }
                     }
 
-                    PlayField.Print(playField);
+                    PlayField.Print(playField, (MaxWidth - width) / 2, (MaxHeight - height) / 2);
                 }
 
                 sW.Stop();
@@ -146,11 +172,20 @@ namespace IsAAAc
 
     public class Room
     {
-        public const int Width = 60;
-        public const int Height = Width / 3; // Rectangle.
-        //public const int Height = Width / 2; // Square.
+        public int Width { get; set; }
+        public int Height { get; set; }
 
-        public static void Print(int xOffset, int yOffset, bool up, bool right, bool down, bool left)
+        public int MaxPlayer { get; set; }
+
+        public Room(int width, int height, int maxPlayer)
+        {
+            Width = width;
+            Height = height;
+
+            MaxPlayer = maxPlayer;
+        }
+
+        public void Print(int xOffset, int yOffset, bool up, bool right, bool down, bool left)
         {
             const ConsoleColor WallColor = ConsoleColor.Gray;
 
@@ -315,7 +350,7 @@ namespace IsAAAc
 
         private static CellInfo[,] _oldPlayField;
 
-        public static void Print(CellInfo[,] playField)
+        public static void Print(CellInfo[,] playField, int xOffset, int yOffset)
         {
             if (_oldPlayField == null)
             {
@@ -337,28 +372,28 @@ namespace IsAAAc
                             {
                                 case CellType.Obstacle:
                                 {
-                                    Program.Write("X", x + 2, y + 2, ConsoleColor.Gray);
+                                    Program.Write("X", x + xOffset + 1, y + yOffset + 1, ConsoleColor.Gray);
 
                                     break;
                                 }
 
                                 case CellType.Bullet:
                                 {
-                                    Program.Write(".", x + 2, y + 2, ConsoleColor.Red);
+                                    Program.Write(".", x + xOffset + 1, y + yOffset + 1, ConsoleColor.Red);
 
                                     break;
                                 }
 
                                 case CellType.Empty:
                                 {
-                                    Program.Write(" ", x + 2, y + 2, ConsoleColor.Black);
+                                    Program.Write(" ", x + xOffset + 1, y + yOffset + 1, ConsoleColor.Black);
 
                                     break;
                                 }
 
                                 case CellType.Player:
                                 {
-                                    Program.Write("♦", x + 2, y + 2, ConsoleColor.Cyan);
+                                    Program.Write("♦", x + xOffset + 1, y + yOffset + 1, ConsoleColor.Cyan);
 
                                     break;
                                 }
@@ -367,6 +402,21 @@ namespace IsAAAc
                     }
                 }
             }
+        }
+    }
+
+    public class Player
+    {
+        public const int MaxDroppedBullets = 10;
+
+        public int Id { get; set; }
+        public int Health { get; set; }
+        public int DroppedBullets { get; set; }
+
+        public Player(int id, int health)
+        {
+            Id = id;
+            Health = health;
         }
     }
 }
