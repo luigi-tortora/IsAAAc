@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace IsAAAc
 {
@@ -35,7 +36,24 @@ namespace IsAAAc
             PlayField playField = new(room);
 
             playField.PlaceObstacle(count: 10);
-            playField.PlacePlayer(id: 0);
+
+            Player player = new(id: 0, health: 5);
+            playField.PlacePlayer(player);
+
+            Random rndEnemy = new();
+            int enemyCount = rndEnemy.Next(1, Player.MaxPlayers + 1);
+
+            List<Player> enemyList = new();
+
+            for (int i = 1; i <= enemyCount; i++)
+            {
+                enemyList.Add(new Player(i, 5));
+            }
+
+            foreach (Player enemy in enemyList)
+            {
+                playField.PlacePlayer(enemy);
+            }
 
             playField.Print();
 
@@ -45,7 +63,7 @@ namespace IsAAAc
 
             while (!exit)
             {
-                int frameTime = 17; // ms.
+                int frameTime = 30; // ms.
 
                 sW.Restart();
 
@@ -98,8 +116,29 @@ namespace IsAAAc
                 }
 
                 sW.Stop();
+                Thread.Sleep(Math.Max(0, frameTime / 2 - (int)sW.ElapsedMilliseconds));
 
-                Thread.Sleep(Math.Max(0, frameTime - (int)sW.ElapsedMilliseconds));
+                sW.Restart();
+                // TODO: .
+
+                foreach (Player enemy in enemyList)
+                {
+                    Random rndMovement = new();
+                    int slow = rndMovement.Next(-85, (int)Direction.Left + 1);
+                    slow = Math.Max(0, slow);
+
+                    Direction enemyMovement = (Direction)slow;
+                    
+                    if (enemyMovement != Direction.None)
+                    {
+                        playField.MovePlayer(enemy.Id, enemyMovement);
+                    }
+                }
+
+                playField.Print();
+
+                sW.Stop();
+                Thread.Sleep(Math.Max(0, frameTime / 2 - (int)sW.ElapsedMilliseconds));
             }
 
             Console.OutputEncoding = System.Text.Encoding.Default;
@@ -279,7 +318,7 @@ namespace IsAAAc
             }
         }
 
-        public void PlacePlayer(int id)
+        public void PlacePlayer(Player player)
         {
             Random rnd = new();
 
@@ -290,7 +329,7 @@ namespace IsAAAc
 
                 if (_playField[y, x].CellType == CellType.Empty)
                 {
-                    _playField[y, x].Set(id, CellType.Player);
+                    _playField[y, x].Set(player.Id, CellType.Player);
 
                     return;
                 }
@@ -387,7 +426,9 @@ namespace IsAAAc
                         {
                             _oldPlayField[y, x].Set(_playField[y, x]);
 
-                            switch (_playField[y, x].CellType)
+                            CellInfo cellInfo = _playField[y, x];
+
+                            switch (cellInfo.CellType)
                             {
                                 case CellType.Obstacle:
                                 {
@@ -412,7 +453,7 @@ namespace IsAAAc
 
                                 case CellType.Player:
                                 {
-                                    Program.Write("♦", x + _room.Left + 1, y + _room.Top + 1, ConsoleColor.Cyan);
+                                    Program.Write(Player.GetCharById(cellInfo.Id), x + _room.Left + 1, y + _room.Top + 1, Player.GetColorById(cellInfo.Id));
 
                                     break;
                                 }
@@ -426,6 +467,7 @@ namespace IsAAAc
 
     public class Player // TODO: .
     {
+        public const int MaxPlayers = 11;
         public const int MaxFireableBullets = 10;
 
         public int Id { get; set; }
@@ -437,5 +479,9 @@ namespace IsAAAc
             Id = id;
             Health = health;
         }
+
+        public static string GetCharById(int id) => id == 0 ? "♦" : "☼";
+        
+        public static ConsoleColor GetColorById(int id) => id == 0 ? ConsoleColor.Cyan : ConsoleColor.Red;
     }
 }
