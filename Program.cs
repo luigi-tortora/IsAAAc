@@ -4,64 +4,46 @@ using System.Threading;
 
 namespace IsAAAc
 {
-    class Program
+    public class Program
     {
+        public const int WindowWidth = 80; // Even.
+        public const int WindowHeight = 40; // Even.
+
         public static void Main(string[] args)
         {
-            const int MaxWidth = 60;
-            const int MaxHeight = MaxWidth / 3; // Rectangle.
-            //public const int Height = Width / 2; // Square.
-
             Console.Title = "IsAAAc";
 
             Console.OutputEncoding = System.Text.Encoding.Unicode;
             Console.CursorVisible = false;
 
+            Console.TreatControlCAsInput = true;
+
             Console.SetWindowPosition(0, 0);
 
-            Console.WindowWidth = MaxWidth + 2;
-            Console.WindowHeight = MaxHeight + 2;
+            Console.WindowWidth = WindowWidth;
+            Console.WindowHeight = WindowHeight;
 
             Console.BufferWidth = Console.WindowWidth;
             Console.BufferHeight = Console.WindowHeight;
 
             Console.Clear();
 
-            Random rnd = new();
+            Room room = new();
 
-            int width = rnd.Next(MaxHeight, MaxWidth);
+            room.Print(true, true, true, true);
 
-            if (width % 2 != 0)
-            {
-                width++;
-            }
+            PlayField playField = new(room);
 
-            int height = width / 3;
+            playField.PlaceObstacle(count: 10);
+            playField.PlacePlayer(id: 0);
 
-            if (height % 2 != 0)
-            {
-                height++;
-            }
-
-            int maxPlayer = rnd.Next(3, 11);
-
-            int obstacles = (10 * width) / MaxWidth;
-
-            Room room = new(width, height, maxPlayer);
-
-            room.Print((MaxWidth - width) / 2, (MaxHeight - height) / 2, true, true, true, true);
-
-            CellInfo[,] playField = new CellInfo[room.Height - 2, room.Width - 2];
-            PlayField.Init(playField);
-
-            PlayField.PlaceObstacle(playField, count: obstacles);
-            PlayField.PlacePlayer(playField, id: 0);
-
-            PlayField.Print(playField, (MaxWidth - width) / 2, (MaxHeight - height) / 2);
+            playField.Print();
 
             Stopwatch sW = new();
 
-            while (true)
+            bool exit = false;
+
+            while (!exit)
             {
                 int frameTime = 17; // ms.
 
@@ -76,47 +58,57 @@ namespace IsAAAc
                     {
                         case ConsoleKey.W:
                         {
-                            PlayField.MovePlayer(playField, id: 0, Direction.Up);
+                            playField.MovePlayer(id: 0, Direction.Up);
 
                             break;
                         }
 
                         case ConsoleKey.S:
                         {
-                            PlayField.MovePlayer(playField, id: 0, Direction.Down);
+                            playField.MovePlayer(id: 0, Direction.Down);
 
                             break;
                         }
 
                         case ConsoleKey.A:
                         {
-                            PlayField.MovePlayer(playField, id: 0, Direction.Left);
+                            playField.MovePlayer(id: 0, Direction.Left);
 
                             break;
                         }
 
                         case ConsoleKey.D:
                         {
-                            PlayField.MovePlayer(playField, id: 0, Direction.Right);
+                            playField.MovePlayer(id: 0, Direction.Right);
 
                             break;
                         }
 
                         case ConsoleKey.Escape:
                         {
+                            exit = true;
+
                             frameTime = 0;
 
-                            return;
+                            break;
                         }
                     }
 
-                    PlayField.Print(playField, (MaxWidth - width) / 2, (MaxHeight - height) / 2);
+                    playField.Print();
                 }
 
                 sW.Stop();
 
                 Thread.Sleep(Math.Max(0, frameTime - (int)sW.ElapsedMilliseconds));
             }
+
+            Console.OutputEncoding = System.Text.Encoding.Default;
+            Console.CursorVisible = true;
+
+            Console.TreatControlCAsInput = false;
+
+            Console.Clear();
+            Console.ResetColor();
         }
 
         public static void Write(string str, int left, int top, ConsoleColor fColor = ConsoleColor.Gray, ConsoleColor bColor = ConsoleColor.Black)
@@ -172,56 +164,73 @@ namespace IsAAAc
 
     public class Room
     {
+        const int DoorWidth = 8;
+        const int DoorHeight = DoorWidth / 2;
+
+        public static int Id { get; set; }
+
+        public int Left { get; set; }
+        public int Top { get; set; }
+
         public int Width { get; set; }
         public int Height { get; set; }
 
-        public int MaxPlayer { get; set; }
-
-        public Room(int width, int height, int maxPlayer)
+        public Room()
         {
-            Width = width;
-            Height = height;
+            Id++;
 
-            MaxPlayer = maxPlayer;
+            Generate();
         }
 
-        public void Print(int xOffset, int yOffset, bool up, bool right, bool down, bool left)
+        private void Generate()
+        {
+            Random rnd = new();
+
+            do
+            {
+                Width = rnd.Next(DoorWidth * 3, Program.WindowWidth - 1);
+                Height = rnd.Next(DoorHeight * 3, Program.WindowHeight - 1);
+            }
+            while (Width % 2 != 0 || Height % 2 != 0);
+
+            Left = (Program.WindowWidth - Width) / 2;
+            Top = (Program.WindowHeight - Height) / 2;
+        }
+
+        public void Print(bool topDoor, bool rightDoor, bool bottomDoor, bool leftDoor) // TODO: Mask or flags enum.
         {
             const ConsoleColor WallColor = ConsoleColor.Gray;
 
-            const int DoorWidth = 8;
-            const int DoorHeight = DoorWidth / 2;
-
-            Program.Write(    "╔" + new String('═', Width - 2) + "╗", xOffset, yOffset, WallColor);
+            Program.Write(    "╔" + new String('═', Width - 2) + "╗", Left, Top, WallColor);
             for (var i = 1; i <= Height - 2; i++)
             {
-                Program.Write("║" + new String(' ', Width - 2) + "║", xOffset, yOffset + i, WallColor);
+                Program.Write("║" + new String(' ', Width - 2) + "║", Left, Top + i, WallColor);
             }
-            Program.Write(    "╚" + new String('═', Width - 2) + "╝", xOffset, yOffset + Height - 1, WallColor);
+            Program.Write(    "╚" + new String('═', Width - 2) + "╝", Left, Top + Height - 1, WallColor);
 
-            if (up)
+            if (topDoor)
             {
-                Program.Write(new String(' ', DoorWidth), xOffset + Width / 2 - DoorWidth / 2, yOffset, ConsoleColor.Black);
+                Program.Write(new String(' ', DoorWidth), Left + Width / 2 - DoorWidth / 2, Top, ConsoleColor.Black);
             }
 
-            if (down)
+            if (bottomDoor)
             {
-                Program.Write(new String(' ', DoorWidth), xOffset + Width / 2 - DoorWidth / 2, yOffset + Height - 1, ConsoleColor.Black);
+                Program.Write(new String(' ', DoorWidth), Left + Width / 2 - DoorWidth / 2, Top + Height - 1, ConsoleColor.Black);
             }
 
-            if (left)
+            if (leftDoor)
             {
                 for (int i = 0; i < DoorHeight; i++)
                 {
-                    Program.Write(" ", xOffset, yOffset + Height / 2 - DoorHeight / 2 + i, ConsoleColor.Black);
+                    Program.Write(" ", Left, Top + Height / 2 - DoorHeight / 2 + i, ConsoleColor.Black);
                 }
             }
 
-            if (right)
+            if (rightDoor)
             {
                 for (int i = 0; i < DoorHeight; i++)
                 {
-                    Program.Write(" ", xOffset + Width - 1, yOffset + Height / 2 - DoorHeight / 2 + i, ConsoleColor.Black);
+                    Program.Write(" ", Left + Width - 1, Top + Height / 2 - DoorHeight / 2 + i, ConsoleColor.Black);
                 }
             }
         }
@@ -229,7 +238,19 @@ namespace IsAAAc
 
     public class PlayField
     {
-        public static void Init(CellInfo[,] playField)
+        CellInfo[,] _playField;
+
+        Room _room;
+
+        public PlayField(Room room)
+        {
+            _playField = new CellInfo[room.Height - 2, room.Width - 2];
+            Init(_playField);
+
+            _room = room;
+        }
+
+        private static void Init(CellInfo[,] playField)
         {
             for (int y = 0; y < playField.GetLength(0); y++)
             {
@@ -240,47 +261,45 @@ namespace IsAAAc
             }
         }
 
-        public static void PlaceObstacle(CellInfo[,] playField, int count)
+        public void PlaceObstacle(int count)
         {
             Random rnd = new();
 
             while (count != 0)
             {
-                int y = rnd.Next(0, playField.GetLength(0));
-                int x = rnd.Next(0, playField.GetLength(1));
+                int y = rnd.Next(0, _playField.GetLength(0));
+                int x = rnd.Next(0, _playField.GetLength(1));
 
-                if (playField[y, x].CellType == CellType.Empty)
+                if (_playField[y, x].CellType == CellType.Empty)
                 {
-                    playField[y, x].Set(cellType: CellType.Obstacle);
+                    _playField[y, x].Set(cellType: CellType.Obstacle);
 
                     count--;
                 }
             }
         }
 
-        public static void PlacePlayer(CellInfo[,] playField, int id)
+        public void PlacePlayer(int id)
         {
             Random rnd = new();
 
             while (true)
             {
-                int y = rnd.Next(0, playField.GetLength(0));
-                int x = rnd.Next(0, playField.GetLength(1));
+                int y = rnd.Next(0, _playField.GetLength(0));
+                int x = rnd.Next(0, _playField.GetLength(1));
 
-                if (playField[y, x].CellType == CellType.Empty)
+                if (_playField[y, x].CellType == CellType.Empty)
                 {
-                    playField[y, x].Set(id, CellType.Player);
+                    _playField[y, x].Set(id, CellType.Player);
 
                     return;
                 }
             }
         }
 
-        public static void MovePlayer(CellInfo[,] playField, int id, Direction direction)
+        public void MovePlayer(int id, Direction direction)
         {
-            const int yInc = 1, xInc = 1;
-
-            (int y, int x) = FindPlayer(playField, id);
+            (int y, int x) = FindPlayer(id);
 
             int yNew = y, xNew = x;
 
@@ -288,56 +307,56 @@ namespace IsAAAc
             {
                 case Direction.Up:
                 {
-                    yNew = y - yInc;
+                    yNew--;
 
                     break;
                 }
 
                 case Direction.Down:
                 {
-                    yNew = y + yInc;
+                    yNew++;
 
                     break;
                 }
 
                 case Direction.Left:
                 {
-                    xNew = x - xInc;
+                    xNew--;
 
                     break;
                 }
 
                 case Direction.Right:
                 {
-                    xNew = x + xInc;
+                    xNew++;
 
                     break;
                 }
             }
 
-            if (yNew >= 0 && yNew < playField.GetLength(0))
+            if (yNew >= 0 && yNew < _playField.GetLength(0))
             {
-                if (xNew >= 0 && xNew < playField.GetLength(1))
+                if (xNew >= 0 && xNew < _playField.GetLength(1))
                 {
-                    if (playField[yNew, xNew].CellType == CellType.Empty)
+                    if (_playField[yNew, xNew].CellType == CellType.Empty)
                     {
-                        playField[y, x].Set();
+                        _playField[y, x].Set();
 
-                        playField[yNew, xNew].Set(id, CellType.Player);
+                        _playField[yNew, xNew].Set(id, CellType.Player);
                     }
                 }
             }
         }
 
-        private static (int y, int x) FindPlayer(CellInfo[,] playField, int id)
+        private (int y, int x) FindPlayer(int id)
         {
-            for (int y = 0; y < playField.GetLength(0); y++)
+            for (int y = 0; y < _playField.GetLength(0); y++)
             {
-                for (int x = 0; x < playField.GetLength(1); x++)
+                for (int x = 0; x < _playField.GetLength(1); x++)
                 {
-                    if (playField[y, x].Id == id)
+                    if (_playField[y, x].Id == id)
                     {
-                        if (playField[y, x].CellType == CellType.Player)
+                        if (_playField[y, x].CellType == CellType.Player)
                         {
                             return (y, x);
                         }
@@ -345,55 +364,55 @@ namespace IsAAAc
                 }
             }
 
-            throw new Exception();
+            throw new Exception(); // TODO: TryFindPlayer().
         }
 
-        private static CellInfo[,] _oldPlayField;
+        private CellInfo[,] _oldPlayField;
 
-        public static void Print(CellInfo[,] playField, int xOffset, int yOffset)
+        public void Print()
         {
             if (_oldPlayField == null)
             {
-                _oldPlayField = new CellInfo[playField.GetLength(0), playField.GetLength(1)];
-                PlayField.Init(_oldPlayField);
+                _oldPlayField = new CellInfo[_playField.GetLength(0), _playField.GetLength(1)];
+                Init(_oldPlayField);
             }
 
             lock (_oldPlayField)
             {
-                for (int y = 0; y < playField.GetLength(0); y++)
+                for (int y = 0; y < _playField.GetLength(0); y++)
                 {
-                    for (int x = 0; x < playField.GetLength(1); x++)
+                    for (int x = 0; x < _playField.GetLength(1); x++)
                     {
-                        if (playField[y, x] != _oldPlayField[y, x])
+                        if (_playField[y, x] != _oldPlayField[y, x])
                         {
-                            _oldPlayField[y, x].Set(playField[y, x]);
+                            _oldPlayField[y, x].Set(_playField[y, x]);
 
-                            switch (playField[y, x].CellType)
+                            switch (_playField[y, x].CellType)
                             {
                                 case CellType.Obstacle:
                                 {
-                                    Program.Write("X", x + xOffset + 1, y + yOffset + 1, ConsoleColor.Gray);
+                                    Program.Write("X", x + _room.Left + 1, y + _room.Top + 1, ConsoleColor.Gray);
 
                                     break;
                                 }
 
                                 case CellType.Bullet:
                                 {
-                                    Program.Write(".", x + xOffset + 1, y + yOffset + 1, ConsoleColor.Red);
+                                    Program.Write(".", x + _room.Left + 1, y + _room.Top + 1, ConsoleColor.Red);
 
                                     break;
                                 }
 
                                 case CellType.Empty:
                                 {
-                                    Program.Write(" ", x + xOffset + 1, y + yOffset + 1, ConsoleColor.Black);
+                                    Program.Write(" ", x + _room.Left + 1, y + _room.Top + 1, ConsoleColor.Black);
 
                                     break;
                                 }
 
                                 case CellType.Player:
                                 {
-                                    Program.Write("♦", x + xOffset + 1, y + yOffset + 1, ConsoleColor.Cyan);
+                                    Program.Write("♦", x + _room.Left + 1, y + _room.Top + 1, ConsoleColor.Cyan);
 
                                     break;
                                 }
@@ -405,13 +424,13 @@ namespace IsAAAc
         }
     }
 
-    public class Player
+    public class Player // TODO: .
     {
-        public const int MaxDroppedBullets = 10;
+        public const int MaxFireableBullets = 10;
 
         public int Id { get; set; }
         public int Health { get; set; }
-        public int DroppedBullets { get; set; }
+        public int FiredBullets { get; set; }
 
         public Player(int id, int health)
         {
