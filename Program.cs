@@ -41,7 +41,14 @@ namespace IsAAAc
 
             for (int id = 0; id < playersCount; id++)
             {
-                playField.PlacePlayer(new(id));
+                if (id == 0)
+                {
+                    playField.PlacePlayer(new(id));
+                }
+                else
+                {
+                    playField.PlacePlayer(new(id, health: 10));
+                }
             }
 
             playField.Print();
@@ -410,6 +417,12 @@ namespace IsAAAc
                         if (cellInfo.Id != cellInfoNew.Id && (cellInfo.Id == 0 || cellInfoNew.Id == 0))
                         {
                             Players[cellInfo.Id].Health -= Players[cellInfoNew.Id].Damage; // TODO: Rimuovere il player dal PlayField se il suo Health == 0.
+
+                            if (Players[cellInfo.Id].Health == 0)
+                            {
+                                cellInfo.Set();
+                                Players.RemoveAt(cellInfo.Id);
+                            }
                         }
 
                         cellInfoNew.Set(cellInfo.Id, CellType.Player);
@@ -420,6 +433,12 @@ namespace IsAAAc
                         if (cellInfo.Id != cellInfoNew.Id && (cellInfo.Id == 0 || cellInfoNew.Id == 0))
                         {
                             Players[cellInfo.Id].Health -= Players[cellInfoNew.Id].Damage; // TODO: Rimuovere il player dal PlayField se il suo Health == 0.
+
+                            if (Players[cellInfo.Id].Health == 0)
+                            {
+                                cellInfo.Set();
+                                Players.RemoveAt(cellInfo.Id);
+                            }
                         }
                     }
                 }
