@@ -7,12 +7,14 @@ namespace IsAAAc
 {
     public class Program
     {
+        public const string Title = "IsAAAc";
+
         public const int WindowWidth = 80; // Even.
         public const int WindowHeight = 40; // Even.
 
         public static void Main(string[] args)
         {
-            Console.Title = "IsAAAc";
+            Console.Title = Title;
 
             Console.OutputEncoding = System.Text.Encoding.Unicode;
             Console.CursorVisible = false;
@@ -31,122 +33,204 @@ namespace IsAAAc
 
             Room room = new();
 
-            room.Print(true, true, true, true);
+            room.Print(false, false, false, false);
 
             PlayField playField = new(room);
 
-            int playersCount = new Random().Next(2, Player.MaxCount + 1);
+            int playersCount = new Random().Next(2, PlayField.MaxPlayersCount + 1);
 
-            playField.PlaceObstacle(count: playersCount * 3);
+            playField.PlaceObstacle(count: playersCount * 2);
 
             for (int id = 0; id < playersCount; id++)
             {
-                if (id == 0)
-                {
-                    playField.PlacePlayer(new(id));
-                }
-                else
-                {
-                    playField.PlacePlayer(new(id, health: 10));
-                }
+                playField.PlacePlayer(new(id));
             }
 
+            PrintPlayersStats(playField.Players);
             playField.Print();
+
+            Random rndWeight = new();
+            Random rndDirection = new();
 
             Stopwatch sW = new();
 
             bool exit = false;
+            GameOver gameOver = GameOver.None;
 
-            while (!exit)
+            do
             {
-                int frameTime = 18; // ms.
+                int frameTime = 36; // ms. // Divisible by 3.
 
-                sW.Restart();
-
-                for (int id = playersCount - 1; id > 0; id--)
+                gameOver = GetGameOverState(playField.Players);
+                if (gameOver == GameOver.None)
                 {
-                    playField.MovePlayerById(id, Direction.None); // TODO: .
-                }
+                    sW.Restart();
 
-                // TODO: Print Stats.
-                playField.Print();
-
-                sW.Stop();
-
-                Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
-
-                // TODO: Verifica Game Over / Win.
-
-                sW.Restart();
-
-                if (Console.KeyAvailable)
-                {
-                    ConsoleKey cK = Console.ReadKey(true).Key;
-                    ThreadPool.QueueUserWorkItem((_) => { while (Console.KeyAvailable && Console.ReadKey(true).Key == cK); });
-
-                    switch (cK)
+                    for (int id = playersCount - 1; id > 0; id--)
                     {
-                        case ConsoleKey.W:
+                        Action action = playField.Players[id].GetActionByWeight(rndWeight.Next(1, 101));
+
+                        switch (action)
                         {
-                            playField.MovePlayerById(id: 0, Direction.Up);
+                            case Action.Move:
+                            {
+                                Direction direction = (Direction)rndDirection.Next((int)Direction.Up, (int)Direction.Left + 1);
 
-                            break;
-                        }
+                                playField.MovePlayerById(id, direction);
 
-                        case ConsoleKey.S:
-                        {
-                            playField.MovePlayerById(id: 0, Direction.Down);
+                                break;
+                            }
 
-                            break;
-                        }
+                            case Action.Fire:
+                            {
+                                Direction direction = (Direction)rndDirection.Next((int)Direction.Up, (int)Direction.Left + 1);
 
-                        case ConsoleKey.A:
-                        {
-                            playField.MovePlayerById(id: 0, Direction.Left);
+                                playField.FireBulletById(id, direction);
 
-                            break;
-                        }
-
-                        case ConsoleKey.D:
-                        {
-                            playField.MovePlayerById(id: 0, Direction.Right);
-
-                            break;
-                        }
-
-                        case ConsoleKey.Escape:
-                        {
-                            exit = true;
-
-                            frameTime = 0;
-
-                            break;
+                                break;
+                            }
                         }
                     }
 
-                    // TODO: Print Stats.
+                    PrintPlayersStats(playField.Players);
                     playField.Print();
+
+                    sW.Stop();
+
+                    Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
                 }
 
-                sW.Stop();
+                gameOver = GetGameOverState(playField.Players);
+                if (gameOver == GameOver.None)
+                {
+                    sW.Restart();
 
-                Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
+                    if (Console.KeyAvailable)
+                    {
+                        ConsoleKey cK = Console.ReadKey(true).Key;
+                        ThreadPool.QueueUserWorkItem((_) => { while (Console.KeyAvailable && Console.ReadKey(true).Key == cK); });
 
-                // TODO: Verifica Game Over / Win.
+                        switch (cK)
+                        {
+                            case ConsoleKey.W:
+                            {
+                                playField.MovePlayerById(id: 0, Direction.Up);
 
-                sW.Restart();
+                                break;
+                            }
 
-                playField.UpdateBulletStatus(); // TODO: .
+                            case ConsoleKey.S:
+                            {
+                                playField.MovePlayerById(id: 0, Direction.Down);
 
-                // TODO: Print Stats.
-                playField.Print();
+                                break;
+                            }
 
-                sW.Stop();
+                            case ConsoleKey.A:
+                            {
+                                playField.MovePlayerById(id: 0, Direction.Left);
 
-                Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
+                                break;
+                            }
 
-                // TODO: Verifica Game Over / Win.
+                            case ConsoleKey.D:
+                            {
+                                playField.MovePlayerById(id: 0, Direction.Right);
+
+                                break;
+                            }
+
+                            case ConsoleKey.UpArrow:
+                            {
+                                playField.FireBulletById(id: 0, Direction.Up);
+
+                                break;
+                            }
+
+                            case ConsoleKey.DownArrow:
+                            {
+                                playField.FireBulletById(id: 0, Direction.Down);
+
+                                break;
+                            }
+
+                            case ConsoleKey.LeftArrow:
+                            {
+                                playField.FireBulletById(id: 0, Direction.Left);
+
+                                break;
+                            }
+
+                            case ConsoleKey.RightArrow:
+                            {
+                                playField.FireBulletById(id: 0, Direction.Right);
+
+                                break;
+                            }
+
+                            case ConsoleKey.Escape:
+                            {
+                                exit = true;
+
+                                frameTime = 0;
+
+                                break;
+                            }
+                        }
+                    }
+
+                    PrintPlayersStats(playField.Players);
+                    playField.Print();
+
+                    sW.Stop();
+
+                    Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
+                }
+
+                gameOver = GetGameOverState(playField.Players);
+                if (gameOver == GameOver.None)
+                {
+                    sW.Restart();
+
+                    playField.UpdateBulletsState();
+
+                    PrintPlayersStats(playField.Players);
+                    playField.Print();
+
+                    sW.Stop();
+
+                    Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
+                }
+                else
+                {
+                    sW.Restart();
+
+                    playField.RemoveAllBullets();
+
+                    PrintPlayersStats(playField.Players);
+                    playField.Print();
+
+                    sW.Stop();
+
+                    Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
+                }
             }
+            while (!exit && gameOver == GameOver.None);
+
+            if (gameOver == GameOver.YouWin)
+            {
+                Console.Title = $"{Title} [Game Over: You Win!]";
+
+                Console.ReadKey(true);
+            }
+            else if (gameOver == GameOver.YouLose)
+            {
+                Console.Title = $"{Title} [Game Over: You Lose!]";
+
+                Console.ReadKey(true);
+            }
+
+            Console.Title = Title;
 
             Console.OutputEncoding = System.Text.Encoding.Default;
             Console.CursorVisible = true;
@@ -167,20 +251,68 @@ namespace IsAAAc
 
             Console.ResetColor();
         }
+
+        public static void PrintPlayersStats(List<Player> players)
+        {
+            int playerHealth = players[0].Health;
+
+            int totalCpuHealth = 0;
+
+            foreach (Player player in players)
+            {
+                if (player.Id != 0)
+                {
+                    totalCpuHealth += player.Health;
+                }
+            }
+
+            Console.Title = $"{Title} [Player Health: {playerHealth}] [Total Cpu Health: {totalCpuHealth}]";
+        }
+
+        public static GameOver GetGameOverState(List<Player> players)
+        {
+            int playerHealth = players[0].Health;
+
+            int totalCpuHealth = 0;
+
+            foreach (Player player in players)
+            {
+                if (player.Id != 0)
+                {
+                    totalCpuHealth += player.Health;
+                }
+            }
+
+            if (playerHealth == 0)
+            {
+                return GameOver.YouLose;
+            }
+            else if (totalCpuHealth == 0)
+            {
+                return GameOver.YouWin;
+            }
+            else
+            {
+                return GameOver.None;
+            }
+        }
     }
+
+    public enum GameOver { None, YouWin, YouLose }
 
     public enum CellType { Empty, Obstacle, Bullet, Player }
 
+    public enum Action { Stay, Move, Fire }
     public enum Direction { None, Up, Right, Down, Left }
 
     public class CellInfo : IEquatable<CellInfo>
     {
-        public int Id { get; set; }
+        public int Id { get; private set; }
 
-        public CellType CellType { get; set; }
+        public CellType CellType { get; private set; }
 
-        public Direction BulletDirection { get; set; }
-        public int BulletDistance { get; set; }
+        public Direction BulletDirection { get; private set; }
+        public int BulletDistance { get; private set; }
 
         public CellInfo(int id = 0, CellType cellType = CellType.Empty, Direction bulletDirection = Direction.None, int bulletDistance = 0)
         {
@@ -213,8 +345,11 @@ namespace IsAAAc
         }
 
         public override bool Equals(object obj) => obj is CellInfo cellInfo && Equals(cellInfo);
-        public bool Equals(CellInfo cellInfo) => Id == cellInfo.Id && CellType == cellInfo.CellType && BulletDirection == cellInfo.BulletDirection;
-        public override int GetHashCode() => HashCode.Combine(Id, CellType, BulletDirection);
+        public bool Equals(CellInfo cellInfo)
+        {
+            return Id == cellInfo.Id && CellType == cellInfo.CellType && BulletDirection == cellInfo.BulletDirection && BulletDistance == cellInfo.BulletDistance;
+        }
+        public override int GetHashCode() => HashCode.Combine(Id, CellType, BulletDirection, BulletDistance);
 
         public static bool operator ==(CellInfo lhs, CellInfo rhs) => lhs.Equals(rhs);
         public static bool operator !=(CellInfo lhs, CellInfo rhs) => !lhs.Equals(rhs);
@@ -225,13 +360,13 @@ namespace IsAAAc
         public const int DoorWidth = 8;
         public const int DoorHeight = DoorWidth / 2;
 
-        public static int Id { get; set; }
+        public static int Id { get; private set; }
 
-        public int Left { get; set; }
-        public int Top { get; set; }
+        public int Left { get; private set; }
+        public int Top { get; private set; }
 
-        public int Width { get; set; }
-        public int Height { get; set; }
+        public int Width { get; private set; }
+        public int Height { get; private set; }
 
         public Room()
         {
@@ -296,16 +431,22 @@ namespace IsAAAc
 
     public class PlayField
     {
-        CellInfo[,] _playField;
+        public const int MaxPlayersCount = 11;
 
-        Room _room;
+        public List<Player> Players { get; }
 
-        List<Player> Players { get; }
+        private readonly CellInfo[,] _playField;
+        private readonly CellInfo[,] _oldPlayField;
+
+        private readonly Room _room;
 
         public PlayField(Room room)
         {
             _playField = new CellInfo[room.Height - 2, room.Width - 2];
             Init(_playField);
+
+            _oldPlayField = new CellInfo[room.Height - 2, room.Width - 2];
+            Init(_oldPlayField);
 
             _room = room;
 
@@ -363,7 +504,12 @@ namespace IsAAAc
 
         public void MovePlayerById(int id, Direction direction)
         {
-            (int y, int x) = FindPlayerById(id);
+            if (Players[id].Health == 0)
+            {
+                return;
+            }
+
+            (int y, int x) = GetPlayerPositionById(id);
 
             int yNew = y, xNew = x;
 
@@ -416,28 +562,33 @@ namespace IsAAAc
 
                         if (cellInfo.Id != cellInfoNew.Id && (cellInfo.Id == 0 || cellInfoNew.Id == 0))
                         {
-                            Players[cellInfo.Id].Health -= Players[cellInfoNew.Id].Damage; // TODO: Rimuovere il player dal PlayField se il suo Health == 0.
+                            Players[cellInfo.Id].Health = Math.Max(0, Players[cellInfo.Id].Health - Players[cellInfoNew.Id].Damage);
 
                             if (Players[cellInfo.Id].Health == 0)
                             {
-                                cellInfo.Set();
-                                Players.RemoveAt(cellInfo.Id);
+                                cellInfoNew.Set();
+                            }
+                            else
+                            {
+                                cellInfoNew.Set(cellInfo.Id, CellType.Player);
                             }
                         }
+                        else
+                        {
+                            cellInfoNew.Set(cellInfo.Id, CellType.Player);
+                        }
 
-                        cellInfoNew.Set(cellInfo.Id, CellType.Player);
                         cellInfo.Set();
                     }
                     else if (cellInfoNew.CellType == CellType.Player)
                     {
                         if (cellInfo.Id != cellInfoNew.Id && (cellInfo.Id == 0 || cellInfoNew.Id == 0))
                         {
-                            Players[cellInfo.Id].Health -= Players[cellInfoNew.Id].Damage; // TODO: Rimuovere il player dal PlayField se il suo Health == 0.
+                            Players[cellInfo.Id].Health = Math.Max(0, Players[cellInfo.Id].Health - Players[cellInfoNew.Id].Damage);
 
                             if (Players[cellInfo.Id].Health == 0)
                             {
                                 cellInfo.Set();
-                                Players.RemoveAt(cellInfo.Id);
                             }
                         }
                     }
@@ -445,7 +596,7 @@ namespace IsAAAc
             }
         }
 
-        private (int y, int x) FindPlayerById(int id)
+        private (int y, int x) GetPlayerPositionById(int id)
         {
             for (int y = 0; y < _playField.GetLength(0); y++)
             {
@@ -464,26 +615,91 @@ namespace IsAAAc
             throw new ArgumentException(nameof(id));
         }
 
-        public void FireBulletById(int id, Direction direction) // TODO: .
+        public void FireBulletById(int id, Direction direction)
         {
+            if (Players[id].Health == 0)
+            {
+                return;
+            }
 
+            (int y, int x) = GetPlayerPositionById(id);
+
+            int yNew = y, xNew = x;
+
+            switch (direction)
+            {
+                case Direction.Up:
+                {
+                    yNew--;
+
+                    break;
+                }
+
+                case Direction.Down:
+                {
+                    yNew++;
+
+                    break;
+                }
+
+                case Direction.Left:
+                {
+                    xNew--;
+
+                    break;
+                }
+
+                case Direction.Right:
+                {
+                    xNew++;
+
+                    break;
+                }
+            }
+
+            if (yNew >= 0 && yNew < _playField.GetLength(0))
+            {
+                if (xNew >= 0 && xNew < _playField.GetLength(1))
+                {
+                    CellInfo cellInfo = _playField[y, x];
+                    CellInfo cellInfoNew = _playField[yNew, xNew];
+
+                    if (cellInfoNew.CellType == CellType.Empty)
+                    {
+                        // TODO: .
+                    }
+                    else if (cellInfoNew.CellType == CellType.Bullet)
+                    {
+                        // TODO: .
+                    }
+                    else if (cellInfoNew.CellType == CellType.Player)
+                    {
+                        // TODO: .
+                    }
+                }
+            }
         }
 
-        public void UpdateBulletStatus() // TODO: .
+        public void UpdateBulletsState() // TODO: .
         {
-
         }
 
-        private CellInfo[,] _oldPlayField;
+        public void RemoveAllBullets()
+        {
+            for (int y = 0; y < _playField.GetLength(0); y++)
+            {
+                for (int x = 0; x < _playField.GetLength(1); x++)
+                {
+                    if (_playField[y, x].CellType == CellType.Bullet)
+                    {
+                        _playField[y, x].Set();
+                    }
+                }
+            }
+        }
 
         public void Print()
         {
-            if (_oldPlayField == null)
-            {
-                _oldPlayField = new CellInfo[_playField.GetLength(0), _playField.GetLength(1)];
-                Init(_oldPlayField);
-            }
-
             lock (_oldPlayField)
             {
                 for (int y = 0; y < _playField.GetLength(0); y++)
@@ -500,14 +716,14 @@ namespace IsAAAc
                             {
                                 case CellType.Obstacle:
                                 {
-                                    Program.Write("X", x + _room.Left + 1, y + _room.Top + 1, ConsoleColor.DarkGray);
+                                    Program.Write(Obstacle.GetString(), x + _room.Left + 1, y + _room.Top + 1, Obstacle.GetColor());
 
                                     break;
                                 }
 
                                 case CellType.Bullet:
                                 {
-                                    Program.Write(Bullet.GetStringById(), x + _room.Left + 1, y + _room.Top + 1, Bullet.GetColorById(cellInfo.Id));
+                                    Program.Write(Bullet.GetString(), x + _room.Left + 1, y + _room.Top + 1, Bullet.GetColorById(cellInfo.Id));
 
                                     break;
                                 }
@@ -535,13 +751,11 @@ namespace IsAAAc
 
     public class Player
     {
-        public const int MaxCount = 11;
-
-        public const int Defaulthealth = 15;
+        public const int Defaulthealth = 10;
         public const int DefaultDamage = 1;
 
-        public const int MaxBulletDistance = 15;
         public const int MaxFireableBullets = 10;
+        public const int MaxBulletDistance = 20;
 
         public int Id { get; }
 
@@ -550,12 +764,50 @@ namespace IsAAAc
 
         public int FiredBullets { get; set; }
 
+        private (int stayWeight, int moveWeight, int fireWeight) _actionWeights;
+
         public Player(int id, int health = Defaulthealth, int damage = DefaultDamage)
         {
             Id = id;
 
             Health = health;
             Damage = damage;
+
+            if (id != 0)
+            {
+                GenerateActionWeights();
+            }
+        }
+
+        private void GenerateActionWeights()
+        {
+            Random rnd = new();
+
+            do
+            {
+                _actionWeights.stayWeight = rnd.Next(1, 101);
+                _actionWeights.moveWeight = rnd.Next(1, 101);
+                _actionWeights.fireWeight = rnd.Next(1, 101);
+            }
+            while (_actionWeights.stayWeight + _actionWeights.moveWeight + _actionWeights.fireWeight != 100);
+        }
+
+        public Action GetActionByWeight(int weight)
+        {
+            if (weight >= 1 && weight <= _actionWeights.stayWeight)
+            {
+                return Action.Stay;
+            }
+            else if (weight > _actionWeights.stayWeight && weight <= _actionWeights.stayWeight + _actionWeights.moveWeight)
+            {
+                return Action.Move;
+            }
+            else if (weight > _actionWeights.stayWeight + _actionWeights.moveWeight && weight <= 100)
+            {
+                return Action.Fire;
+            }
+
+            throw new ArgumentException(nameof(weight));
         }
 
         public static string GetStringById(int id)
@@ -571,7 +823,7 @@ namespace IsAAAc
 
     public static class Bullet
     {
-        public static string GetStringById()
+        public static string GetString()
         {
             return "∙"; // Alternative: "•".
         }
@@ -579,6 +831,19 @@ namespace IsAAAc
         public static ConsoleColor GetColorById(int id)
         {
             return id == 0 ? ConsoleColor.DarkCyan : ConsoleColor.DarkRed;
+        }
+    }
+
+    public static class Obstacle
+    {
+        public static string GetString()
+        {
+            return "X";
+        }
+
+        public static ConsoleColor GetColor()
+        {
+            return ConsoleColor.DarkGray;
         }
     }
 }
