@@ -622,6 +622,11 @@ namespace IsAAAc
                 return;
             }
 
+            if (Players[id].FiredBullets == Player.MaxFireableBullets)
+            {
+                return;
+            }
+
             (int y, int x) = GetPlayerPositionById(id);
 
             int yNew = y, xNew = x;
@@ -666,15 +671,27 @@ namespace IsAAAc
 
                     if (cellInfoNew.CellType == CellType.Empty)
                     {
-                        // TODO: .
+                        Players[cellInfo.Id].FiredBullets++;
+
+                        cellInfoNew.Set(cellInfo.Id, CellType.Bullet, direction, 1);
                     }
                     else if (cellInfoNew.CellType == CellType.Bullet)
                     {
-                        // TODO: .
+                        Players[cellInfoNew.Id].FiredBullets--;
+
+                        cellInfoNew.Set();
                     }
                     else if (cellInfoNew.CellType == CellType.Player)
                     {
-                        // TODO: .
+                        if (cellInfo.Id != cellInfoNew.Id && (cellInfo.Id == 0 || cellInfoNew.Id == 0))
+                        {
+                            Players[cellInfoNew.Id].Health = Math.Max(0, Players[cellInfoNew.Id].Health - Players[cellInfo.Id].Damage);
+
+                            if (Players[cellInfoNew.Id].Health == 0)
+                            {
+                                cellInfo.Set();
+                            }
+                        }
                     }
                 }
             }
@@ -682,6 +699,22 @@ namespace IsAAAc
 
         public void UpdateBulletsState() // TODO: .
         {
+            for (int id = Players.Count; id > 0; id--)
+            {
+                for (int y = 0; y < _playField.GetLength(0); y++)
+                {
+                    for (int x = 0; x < _playField.GetLength(1); x++)
+                    {
+                        if (_playField[y, x].Id == player.Id)
+                        {
+                            if (_playField[y, x].CellType == CellType.Bullet)
+                            {
+                                return (y, x);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         public void RemoveAllBullets()
