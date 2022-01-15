@@ -312,7 +312,7 @@ namespace IsAAAc
         public CellType CellType { get; private set; }
 
         public Direction BulletDirection { get; private set; }
-        public int BulletDistance { get; private set; }
+        public int BulletDistance { get; set; }
 
         public CellInfo(int id = 0, CellType cellType = CellType.Empty, Direction bulletDirection = Direction.None, int bulletDistance = 0)
         {
@@ -436,7 +436,7 @@ namespace IsAAAc
         public List<Player> Players { get; }
 
         private readonly CellInfo[,] _playField;
-        private readonly CellInfo[,] _oldPlayField;
+        private readonly CellInfo[,] _playFieldOld;
 
         private readonly Room _room;
 
@@ -445,8 +445,8 @@ namespace IsAAAc
             _playField = new CellInfo[room.Height - 2, room.Width - 2];
             Init(_playField);
 
-            _oldPlayField = new CellInfo[room.Height - 2, room.Width - 2];
-            Init(_oldPlayField);
+            _playFieldOld = new CellInfo[room.Height - 2, room.Width - 2];
+            Init(_playFieldOld);
 
             _room = room;
 
@@ -551,6 +551,7 @@ namespace IsAAAc
                     CellInfo cellInfo = _playField[y, x];
                     CellInfo cellInfoNew = _playField[yNew, xNew];
 
+                    // TODO: switch.
                     if (cellInfoNew.CellType == CellType.Empty)
                     {
                         cellInfoNew.Set(cellInfo.Id, CellType.Player);
@@ -558,9 +559,11 @@ namespace IsAAAc
                     }
                     else if (cellInfoNew.CellType == CellType.Bullet)
                     {
+                        Trace.Assert(cellInfo.Id != cellInfoNew.Id);
+
                         Players[cellInfoNew.Id].FiredBullets--;
 
-                        if (cellInfo.Id != cellInfoNew.Id && (cellInfo.Id == 0 || cellInfoNew.Id == 0))
+                        if (cellInfo.Id == 0 || cellInfoNew.Id == 0)
                         {
                             Players[cellInfo.Id].Health = Math.Max(0, Players[cellInfo.Id].Health - Players[cellInfoNew.Id].Damage);
 
@@ -582,7 +585,9 @@ namespace IsAAAc
                     }
                     else if (cellInfoNew.CellType == CellType.Player)
                     {
-                        if (cellInfo.Id != cellInfoNew.Id && (cellInfo.Id == 0 || cellInfoNew.Id == 0))
+                        Trace.Assert(cellInfo.Id != cellInfoNew.Id);
+
+                        if (cellInfo.Id == 0 || cellInfoNew.Id == 0)
                         {
                             Players[cellInfo.Id].Health = Math.Max(0, Players[cellInfo.Id].Health - Players[cellInfoNew.Id].Damage);
 
@@ -669,6 +674,7 @@ namespace IsAAAc
                     CellInfo cellInfo = _playField[y, x];
                     CellInfo cellInfoNew = _playField[yNew, xNew];
 
+                    // TODO: switch.
                     if (cellInfoNew.CellType == CellType.Empty)
                     {
                         Players[cellInfo.Id].FiredBullets++;
@@ -683,13 +689,15 @@ namespace IsAAAc
                     }
                     else if (cellInfoNew.CellType == CellType.Player)
                     {
-                        if (cellInfo.Id != cellInfoNew.Id && (cellInfo.Id == 0 || cellInfoNew.Id == 0))
+                        Trace.Assert(cellInfo.Id != cellInfoNew.Id);
+
+                        if (cellInfo.Id == 0 || cellInfoNew.Id == 0)
                         {
                             Players[cellInfoNew.Id].Health = Math.Max(0, Players[cellInfoNew.Id].Health - Players[cellInfo.Id].Damage);
 
                             if (Players[cellInfoNew.Id].Health == 0)
                             {
-                                cellInfo.Set();
+                                cellInfoNew.Set();
                             }
                         }
                     }
@@ -697,17 +705,124 @@ namespace IsAAAc
             }
         }
 
-        public void UpdateBulletsState() // TODO: .
+        public void UpdateBulletsState()
         {
-            for (int id = Players.Count; id > 0; id--)
+            for (int id = Players.Count - 1; id >= 0; id--)
             {
                 for (int y = 0; y < _playField.GetLength(0); y++)
                 {
                     for (int x = 0; x < _playField.GetLength(1); x++)
                     {
-                        if (_playField[y, x].Id == Players[id].Id && _playField[y, x].CellType == CellType.Bullet)
+                        CellInfo cellInfo = _playField[y, x];
+
+                        if (cellInfo.Id == id && cellInfo.CellType == CellType.Bullet)
                         {
-                            
+                            if (cellInfo.BulletDistance == Player.MaxBulletDistance)
+                            {
+                                Players[cellInfo.Id].FiredBullets--;
+
+                                cellInfo.Set();
+
+                                continue;
+                            }
+
+                            int yNew = y, xNew = x;
+
+                            switch (cellInfo.BulletDirection)
+                            {
+                                case Direction.Up:
+                                {
+                                    yNew--;
+
+                                    break;
+                                }
+
+                                case Direction.Down:
+                                {
+                                    yNew++;
+
+                                    break;
+                                }
+
+                                case Direction.Left:
+                                {
+                                    xNew--;
+
+                                    break;
+                                }
+
+                                case Direction.Right:
+                                {
+                                    xNew++;
+
+                                    break;
+                                }
+                            }
+
+                            if (yNew < 0 || yNew >= _playField.GetLength(0) || xNew < 0 || xNew >= _playField.GetLength(1))
+                            {
+                                Players[cellInfo.Id].FiredBullets--;
+
+                                cellInfo.Set();
+
+                                continue;
+                            }
+
+                            CellInfo cellInfoNew = _playField[yNew, xNew];
+
+                            switch (cellInfoNew.CellType)
+                            {
+                                case CellType.Empty:
+                                {
+                                    cellInfoNew.Set(cellInfo);
+                                    cellInfoNew.BulletDistance++;
+
+                                    cellInfo.Set();
+
+                                    break;
+                                }
+
+                                case CellType.Obstacle:
+                                {
+                                    Players[cellInfo.Id].FiredBullets--;
+
+                                    cellInfo.Set();
+
+                                    break;
+                                }
+
+                                case CellType.Bullet:
+                                {
+                                    if (cellInfo.Id == cellInfoNew.Id)
+                                    {
+                                        Trace.Assert(cellInfo.BulletDirection == cellInfoNew.BulletDirection);
+
+                                        // TODO: .
+                                    }
+                                    else
+                                    {
+                                        Players[cellInfo.Id].FiredBullets--;
+                                        Players[cellInfoNew.Id].FiredBullets--;
+
+                                        cellInfo.Set();
+                                        cellInfoNew.Set();
+                                    }
+
+                                    break;
+                                }
+
+                                case CellType.Player:
+                                {
+                                    Trace.Assert(cellInfo.Id != cellInfoNew.Id);
+
+                                    Players[cellInfo.Id].FiredBullets--;
+                                    cellInfo.Set();
+
+                                    // TODO: Damage.
+
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
@@ -730,15 +845,15 @@ namespace IsAAAc
 
         public void Print()
         {
-            lock (_oldPlayField)
+            lock (_playFieldOld)
             {
                 for (int y = 0; y < _playField.GetLength(0); y++)
                 {
                     for (int x = 0; x < _playField.GetLength(1); x++)
                     {
-                        if (_playField[y, x] != _oldPlayField[y, x])
+                        if (_playField[y, x] != _playFieldOld[y, x])
                         {
-                            _oldPlayField[y, x].Set(_playField[y, x]);
+                            _playFieldOld[y, x].Set(_playField[y, x]);
 
                             CellInfo cellInfo = _playField[y, x];
 
