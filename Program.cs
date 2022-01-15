@@ -817,8 +817,16 @@ namespace IsAAAc
 
                                     Players[cellInfo.Id].FiredBullets--;
                                     cellInfo.Set();
+                                    
+                                    if (cellInfo.Id == 0 || cellInfoNew.Id == 0)
+                                    {
+                                        Players[cellInfoNew.Id].Health = Math.Max(0, Players[cellInfoNew.Id].Health - Players[cellInfo.Id].Damage);
 
-                                    // TODO: Damage.
+                                        if (Players[cellInfoNew.Id].Health == 0)
+                                        {
+                                            cellInfoNew.Set();
+                                        }
+                                    }
 
                                     break;
                                 }
