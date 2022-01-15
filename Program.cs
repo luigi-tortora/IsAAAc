@@ -705,12 +705,9 @@ namespace IsAAAc
                 {
                     for (int x = 0; x < _playField.GetLength(1); x++)
                     {
-                        if (_playField[y, x].Id == player.Id)
+                        if (_playField[y, x].Id == Players[id].Id && _playField[y, x].CellType == CellType.Bullet)
                         {
-                            if (_playField[y, x].CellType == CellType.Bullet)
-                            {
-                                return (y, x);
-                            }
+                            
                         }
                     }
                 }
