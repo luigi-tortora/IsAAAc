@@ -551,50 +551,60 @@ namespace IsAAAc
                     CellInfo cellInfo = _playField[y, x];
                     CellInfo cellInfoNew = _playField[yNew, xNew];
 
-                    // TODO: switch.
-                    if (cellInfoNew.CellType == CellType.Empty)
+                    switch (cellInfoNew.CellType)
                     {
-                        cellInfoNew.Set(cellInfo.Id, CellType.Player);
-                        cellInfo.Set();
-                    }
-                    else if (cellInfoNew.CellType == CellType.Bullet)
-                    {
-                        Trace.Assert(cellInfo.Id != cellInfoNew.Id);
-
-                        Players[cellInfoNew.Id].FiredBullets--;
-
-                        if (cellInfo.Id == 0 || cellInfoNew.Id == 0)
+                        case CellType.Empty:
                         {
-                            Players[cellInfo.Id].Health = Math.Max(0, Players[cellInfo.Id].Health - Players[cellInfoNew.Id].Damage);
+                            cellInfoNew.Set(cellInfo.Id, CellType.Player);
+                            cellInfo.Set();
 
-                            if (Players[cellInfo.Id].Health == 0)
+                            break;
+                        }
+
+                        case CellType.Bullet:
+                        {
+                            Trace.Assert(cellInfo.Id != cellInfoNew.Id);
+
+                            Players[cellInfoNew.Id].FiredBullets--;
+
+                            if (cellInfo.Id == 0 || cellInfoNew.Id == 0)
                             {
-                                cellInfoNew.Set();
+                                Players[cellInfo.Id].Health = Math.Max(0, Players[cellInfo.Id].Health - Players[cellInfoNew.Id].Damage);
+
+                                if (Players[cellInfo.Id].Health == 0)
+                                {
+                                    cellInfoNew.Set();
+                                }
+                                else
+                                {
+                                    cellInfoNew.Set(cellInfo.Id, CellType.Player);
+                                }
                             }
                             else
                             {
                                 cellInfoNew.Set(cellInfo.Id, CellType.Player);
                             }
+
+                            cellInfo.Set();
+                            
+                            break;
                         }
-                        else
+
+                        case CellType.Player:
                         {
-                            cellInfoNew.Set(cellInfo.Id, CellType.Player);
-                        }
+                            Trace.Assert(cellInfo.Id != cellInfoNew.Id);
 
-                        cellInfo.Set();
-                    }
-                    else if (cellInfoNew.CellType == CellType.Player)
-                    {
-                        Trace.Assert(cellInfo.Id != cellInfoNew.Id);
-
-                        if (cellInfo.Id == 0 || cellInfoNew.Id == 0)
-                        {
-                            Players[cellInfo.Id].Health = Math.Max(0, Players[cellInfo.Id].Health - Players[cellInfoNew.Id].Damage);
-
-                            if (Players[cellInfo.Id].Health == 0)
+                            if (cellInfo.Id == 0 || cellInfoNew.Id == 0)
                             {
-                                cellInfo.Set();
+                                Players[cellInfo.Id].Health = Math.Max(0, Players[cellInfo.Id].Health - Players[cellInfoNew.Id].Damage);
+
+                                if (Players[cellInfo.Id].Health == 0)
+                                {
+                                    cellInfo.Set();
+                                }
                             }
+                            
+                            break;
                         }
                     }
                 }
