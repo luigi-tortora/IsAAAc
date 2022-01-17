@@ -33,7 +33,7 @@ namespace IsAAAc
 
             Room room = new();
 
-            room.Print(false, false, false, false);
+            room.Print(true, false, false, false);
 
             PlayField playField = new(room);
 
@@ -243,6 +243,7 @@ namespace IsAAAc
         {
             int playerHealth = 0;
             int enemiesHealth = 0;
+            int aliveEnemies = 0;
 
             foreach (Player player in players)
             {
@@ -256,7 +257,18 @@ namespace IsAAAc
                 }
             }
 
-            Console.Title = $"{Title} [Player Health: {playerHealth}] [Enemies Health: {enemiesHealth}]";
+            foreach (Player player in players)
+            {
+                if (player.Id != 0)
+                {
+                    if (player.Health != 0)
+                    {
+                        aliveEnemies++;
+                    }
+                }
+            }
+
+            Console.Title = $"{Title} [Player Health: {playerHealth}] [Enemies Health: {enemiesHealth}] [Alive Enemies: {aliveEnemies}]" ;
         }
 
         public static GameOver GetGameOverState(List<Player> players)
