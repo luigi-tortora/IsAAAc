@@ -13,7 +13,7 @@ namespace IsAAAc
         public const int WindowHeight = 40; // Even.
 
         public static void Main(string[] args)
-        {
+        {            
             Console.Title = Title;
 
             Console.OutputEncoding = System.Text.Encoding.Unicode;
@@ -33,7 +33,7 @@ namespace IsAAAc
 
             Room room = new();
 
-            room.Print(false, false, false, false);
+            room.Print((DoorsState)(new Random().Next(0, 16)));
 
             PlayField playField = new(room);
 
@@ -357,6 +357,16 @@ namespace IsAAAc
 
     public enum Action { Stay, Move, Fire }
     public enum Direction { None, Up, Right, Down, Left }
+    
+    [Flags]
+    public enum DoorsState
+    {
+        None = 0,
+        Up = 1, // 1 << 0
+        Right = 2, //1 << 1
+        Down = 4, // 1 << 2
+        Left = 8 // 1 << 3
+    }
 
     public class CellInfo : IEquatable<CellInfo>
     {
@@ -452,7 +462,7 @@ namespace IsAAAc
             Top = (Program.WindowHeight - Height) / 2;
         }
 
-        public void Print(bool topDoor, bool rightDoor, bool bottomDoor, bool leftDoor) // TODO: Mask or flags enum.
+        public void Print(DoorsState doorsState)
         {
             const ConsoleColor WallColor = ConsoleColor.Gray;
 
@@ -463,17 +473,17 @@ namespace IsAAAc
             }
             Program.Write(    "╚" + new String('═', Width - 2) + "╝", Left, Top + Height - 1, WallColor);
 
-            if (topDoor)
+            if (doorsState.HasFlag(DoorsState.Up))
             {
                 Program.Write(new String(' ', DoorWidth), Left + Width / 2 - DoorWidth / 2, Top, ConsoleColor.Black);
             }
 
-            if (bottomDoor)
+            if (doorsState.HasFlag(DoorsState.Down))
             {
                 Program.Write(new String(' ', DoorWidth), Left + Width / 2 - DoorWidth / 2, Top + Height - 1, ConsoleColor.Black);
             }
 
-            if (leftDoor)
+            if (doorsState.HasFlag(DoorsState.Left))
             {
                 for (int i = 0; i < DoorHeight; i++)
                 {
@@ -481,7 +491,7 @@ namespace IsAAAc
                 }
             }
 
-            if (rightDoor)
+            if (doorsState.HasFlag(DoorsState.Right))
             {
                 for (int i = 0; i < DoorHeight; i++)
                 {
