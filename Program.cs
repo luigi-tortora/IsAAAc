@@ -63,10 +63,10 @@ namespace IsAAAc
 
             bool exit = false;
 
+            int frameTime = 20 * 3; // ms.
+
             while (true)
             {
-                int frameTime = 20 * 3; // ms.
-
                 if (exit || GetGameOverState(playField.Players) != GameOver.None)
                 {
                     break;
@@ -97,7 +97,7 @@ namespace IsAAAc
                     }
                 }
 
-                PrintPlayersStats(playField.Players);
+                PrintPlayersStats(playField.Players, frameTime);
                 playField.Print();
 
                 sW.Stop();
@@ -212,10 +212,24 @@ namespace IsAAAc
 
                             break;
                         }
+
+                        case ConsoleKey.OemPlus:
+                        {
+                            frameTime = Math.Clamp(((frameTime / 3) - 1) * 3, 1, 1000);
+
+                            break;
+                        }
+
+                        case ConsoleKey.OemMinus:
+                        {
+                            frameTime = Math.Clamp(((frameTime / 3) + 1) * 3, 1, 1000);
+
+                            break;
+                        }
                     }
                 }
 
-                PrintPlayersStats(playField.Players);
+                PrintPlayersStats(playField.Players, frameTime);
                 playField.Print();
 
                 sW.Stop();
@@ -231,7 +245,7 @@ namespace IsAAAc
 
                 playField.UpdateBulletsState();
 
-                PrintPlayersStats(playField.Players);
+                PrintPlayersStats(playField.Players, frameTime);
                 playField.Print();
 
                 sW.Stop();
@@ -271,8 +285,10 @@ namespace IsAAAc
             Console.ResetColor();
         }
 
-        public static void PrintPlayersStats(List<Player> players)
+        public static void PrintPlayersStats(List<Player> players, int frameTime = 1)
         {
+            int fps = (int)(1f / ((float)frameTime / 1000f));
+
             int playerHealth = 0;
             int enemiesHealth = 0;
 
@@ -295,7 +311,7 @@ namespace IsAAAc
                 }
             }
 
-            Console.Title = $"{Title} [Player Health: {playerHealth}] [Enemies Health: {enemiesHealth}] [Enemies: {enemies}]";
+            Console.Title = $"{Title} [FPS: {fps}] [Player Health: {playerHealth}] [Enemies Health: {enemiesHealth}] [Enemies: {enemies}]";
         }
 
         public static GameOver GetGameOverState(List<Player> players)
