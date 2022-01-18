@@ -33,7 +33,7 @@ namespace IsAAAc
 
             Room room = new();
 
-            room.Print(true, false, false, false);
+            room.Print(false, false, false, false);
 
             PlayField playField = new(room);
 
@@ -45,7 +45,7 @@ namespace IsAAAc
             {
                 if (id == 0)
                 {
-                    playField.PlacePlayer(new(id, damage: Player.DefaultDamage * 2));
+                    playField.PlacePlayer(new(id));
                 }
                 else
                 {
@@ -83,14 +83,14 @@ namespace IsAAAc
                     {
                         case Action.Move:
                         {
-                            playField.MovePlayerById(id, direction);
+                            playField.TryMovePlayerById(id, direction);
 
                             break;
                         }
 
                         case Action.Fire:
                         {
-                            playField.FireBulletById(id, direction);
+                            playField.TryFireBulletById(id, direction);
 
                             break;
                         }
@@ -113,63 +113,95 @@ namespace IsAAAc
 
                 if (Console.KeyAvailable)
                 {
-                    ConsoleKey cK = Console.ReadKey(true).Key;
-                    ThreadPool.QueueUserWorkItem((_) => { while (Console.KeyAvailable && Console.ReadKey(true).Key == cK); });
+                    ConsoleKeyInfo cKI = Console.ReadKey(true);
+                    ThreadPool.QueueUserWorkItem((_) => { while (Console.KeyAvailable && Console.ReadKey(true) == cKI); });
 
-                    switch (cK)
+                    switch (cKI.Key)
                     {
                         case ConsoleKey.W:
+                        case ConsoleKey.UpArrow when cKI.Modifiers.HasFlag(ConsoleModifiers.Control):
                         {
-                            playField.MovePlayerById(id: 0, Direction.Up);
+                            if (playField.TryMovePlayerById(id: 0, Direction.Up))
+                            {
+                                BeepAsync(800, 1);
+                                BeepAsync(800, 1);
+                            }
 
                             break;
                         }
 
                         case ConsoleKey.S:
+                        case ConsoleKey.DownArrow when cKI.Modifiers.HasFlag(ConsoleModifiers.Control):
                         {
-                            playField.MovePlayerById(id: 0, Direction.Down);
+                            if (playField.TryMovePlayerById(id: 0, Direction.Down))
+                            {
+                                BeepAsync(800, 1);
+                                BeepAsync(800, 1);
+                            }
 
                             break;
                         }
 
                         case ConsoleKey.A:
+                        case ConsoleKey.LeftArrow when cKI.Modifiers.HasFlag(ConsoleModifiers.Control):
                         {
-                            playField.MovePlayerById(id: 0, Direction.Left);
+                            if (playField.TryMovePlayerById(id: 0, Direction.Left))
+                            {
+                                BeepAsync(800, 1);
+                                BeepAsync(800, 1);
+                            }
 
                             break;
                         }
 
                         case ConsoleKey.D:
+                        case ConsoleKey.RightArrow when cKI.Modifiers.HasFlag(ConsoleModifiers.Control):
                         {
-                            playField.MovePlayerById(id: 0, Direction.Right);
+                            if (playField.TryMovePlayerById(id: 0, Direction.Right))
+                            {
+                                BeepAsync(800, 1);
+                                BeepAsync(800, 1);
+                            }
 
                             break;
                         }
 
                         case ConsoleKey.UpArrow:
                         {
-                            playField.FireBulletById(id: 0, Direction.Up);
+                            if (playField.TryFireBulletById(id: 0, Direction.Up))
+                            {
+                                BeepAsync(800, 1);
+                            }
 
                             break;
                         }
 
                         case ConsoleKey.DownArrow:
                         {
-                            playField.FireBulletById(id: 0, Direction.Down);
+                            if (playField.TryFireBulletById(id: 0, Direction.Down))
+                            {
+                                BeepAsync(800, 1);
+                            }
 
                             break;
                         }
 
                         case ConsoleKey.LeftArrow:
                         {
-                            playField.FireBulletById(id: 0, Direction.Left);
+                            if (playField.TryFireBulletById(id: 0, Direction.Left))
+                            {
+                                BeepAsync(800, 1);
+                            }
 
                             break;
                         }
 
                         case ConsoleKey.RightArrow:
                         {
-                            playField.FireBulletById(id: 0, Direction.Right);
+                            if (playField.TryFireBulletById(id: 0, Direction.Right))
+                            {
+                                BeepAsync(800, 1);
+                            }
 
                             break;
                         }
@@ -243,7 +275,8 @@ namespace IsAAAc
         {
             int playerHealth = 0;
             int enemiesHealth = 0;
-            int aliveEnemies = 0;
+
+            int enemies = 0;
 
             foreach (Player player in players)
             {
@@ -254,21 +287,15 @@ namespace IsAAAc
                 else
                 {
                     enemiesHealth += player.Health;
-                }
-            }
 
-            foreach (Player player in players)
-            {
-                if (player.Id != 0)
-                {
                     if (player.Health != 0)
                     {
-                        aliveEnemies++;
+                        enemies++;
                     }
                 }
             }
 
-            Console.Title = $"{Title} [Player Health: {playerHealth}] [Enemies Health: {enemiesHealth}] [Alive Enemies: {aliveEnemies}]" ;
+            Console.Title = $"{Title} [Player Health: {playerHealth}] [Enemies Health: {enemiesHealth}] [Enemies: {enemies}]";
         }
 
         public static GameOver GetGameOverState(List<Player> players)
@@ -300,6 +327,11 @@ namespace IsAAAc
             {
                 return GameOver.None;
             }
+        }
+
+        private static void BeepAsync(int frequency = 800, int duration = 200)
+        {
+            ThreadPool.QueueUserWorkItem((_) => Console.Beep(frequency, duration));
         }
     }
 
@@ -518,208 +550,172 @@ namespace IsAAAc
             }
         }
 
-        public void MovePlayerById(int id, Direction direction)
+        public bool TryMovePlayerById(int id, Direction direction)
         {
             if (Players[id].Health == 0)
             {
-                return;
+                return false;
             }
 
-            (int y, int x) = GetPlayerPositionById(id);
+            bool result = false;
 
-            int yNew = y, xNew = x;
+            (int ySrc, int xSrc) = GetPlayerPositionById(id);
 
-            switch (direction)
+            (int yDst, int xDst) = direction switch
             {
-                case Direction.Up:
-                {
-                    yNew--;
+                Direction.Up    => (yDst = ySrc - 1, xSrc),
+                Direction.Down  => (yDst = ySrc + 1, xSrc),
+                Direction.Left  => (yDst = ySrc, xDst = xSrc - 1),
+                Direction.Right => (yDst = ySrc, xDst = xSrc + 1),
+                _ => throw new ArgumentException(nameof(direction))
+            };
 
-                    break;
-                }
-
-                case Direction.Down:
-                {
-                    yNew++;
-
-                    break;
-                }
-
-                case Direction.Left:
-                {
-                    xNew--;
-
-                    break;
-                }
-
-                case Direction.Right:
-                {
-                    xNew++;
-
-                    break;
-                }
-            }
-
-            if (yNew >= 0 && yNew < _playField.GetLength(0))
+            if (yDst >= 0 && yDst < _playField.GetLength(0) && xDst >= 0 && xDst < _playField.GetLength(1))
             {
-                if (xNew >= 0 && xNew < _playField.GetLength(1))
-                {
-                    CellInfo cellInfo = _playField[y, x];
-                    CellInfo cellInfoNew = _playField[yNew, xNew];
+                CellInfo cellInfoSrc = _playField[ySrc, xSrc];
+                CellInfo cellInfoDst = _playField[yDst, xDst];
 
-                    switch (cellInfoNew.CellType)
+                switch (cellInfoDst.CellType)
+                {
+                    case CellType.Empty:
                     {
-                        case CellType.Empty:
+                        cellInfoDst.Set(cellInfoSrc.Id, CellType.Player);
+                        cellInfoSrc.Set();
+
+                        result = true;
+
+                        break;
+                    }
+
+                    case CellType.Bullet:
+                    {
+                        Trace.Assert(cellInfoSrc.Id != cellInfoDst.Id);
+
+                        Players[cellInfoDst.Id].FiredBullets--;
+
+                        if (cellInfoSrc.Id == 0 || cellInfoDst.Id == 0)
                         {
-                            cellInfoNew.Set(cellInfo.Id, CellType.Player);
-                            cellInfo.Set();
+                            Players[cellInfoSrc.Id].Health = Math.Max(0, Players[cellInfoSrc.Id].Health - Players[cellInfoDst.Id].Damage);
 
-                            break;
-                        }
-
-                        case CellType.Bullet:
-                        {
-                            Trace.Assert(cellInfo.Id != cellInfoNew.Id);
-
-                            Players[cellInfoNew.Id].FiredBullets--;
-
-                            if (cellInfo.Id == 0 || cellInfoNew.Id == 0)
+                            if (Players[cellInfoSrc.Id].Health == 0)
                             {
-                                Players[cellInfo.Id].Health = Math.Max(0, Players[cellInfo.Id].Health - Players[cellInfoNew.Id].Damage);
-
-                                if (Players[cellInfo.Id].Health == 0)
-                                {
-                                    cellInfoNew.Set();
-                                }
-                                else
-                                {
-                                    cellInfoNew.Set(cellInfo.Id, CellType.Player);
-                                }
+                                cellInfoDst.Set();
                             }
                             else
                             {
-                                cellInfoNew.Set(cellInfo.Id, CellType.Player);
+                                cellInfoDst.Set(cellInfoSrc.Id, CellType.Player);
                             }
-
-                            cellInfo.Set();
-
-                            break;
                         }
-
-                        case CellType.Player:
+                        else
                         {
-                            Trace.Assert(cellInfo.Id != cellInfoNew.Id);
-
-                            if (cellInfo.Id == 0 || cellInfoNew.Id == 0)
-                            {
-                                Players[cellInfo.Id].Health = Math.Max(0, Players[cellInfo.Id].Health - Players[cellInfoNew.Id].Damage);
-
-                                if (Players[cellInfo.Id].Health == 0)
-                                {
-                                    cellInfo.Set();
-                                }
-                            }
-
-                            break;
+                            cellInfoDst.Set(cellInfoSrc.Id, CellType.Player);
                         }
+
+                        cellInfoSrc.Set();
+
+                        result = true;
+
+                        break;
+                    }
+
+                    case CellType.Player:
+                    {
+                        Trace.Assert(cellInfoSrc.Id != cellInfoDst.Id);
+
+                        if (cellInfoSrc.Id == 0 || cellInfoDst.Id == 0)
+                        {
+                            Players[cellInfoSrc.Id].Health = Math.Max(0, Players[cellInfoSrc.Id].Health - Players[cellInfoDst.Id].Damage);
+
+                            if (Players[cellInfoSrc.Id].Health == 0)
+                            {
+                                cellInfoSrc.Set();
+                            }
+                        }
+
+                        break;
                     }
                 }
             }
+
+            return result;
         }
 
-        public void FireBulletById(int id, Direction direction)
+        public bool TryFireBulletById(int id, Direction direction)
         {
             if (Players[id].Health == 0)
             {
-                return;
+                return false;
             }
 
             if (Players[id].FiredBullets == Player.MaxFireableBullets)
             {
-                return;
+                return false;
             }
 
-            (int y, int x) = GetPlayerPositionById(id);
+            bool result = false;
 
-            int yNew = y, xNew = x;
+            (int ySrc, int xSrc) = GetPlayerPositionById(id);
 
-            switch (direction)
+            (int yDst, int xDst) = direction switch
             {
-                case Direction.Up:
-                {
-                    yNew--;
+                Direction.Up    => (yDst = ySrc - 1, xSrc),
+                Direction.Down  => (yDst = ySrc + 1, xSrc),
+                Direction.Left  => (yDst = ySrc, xDst = xSrc - 1),
+                Direction.Right => (yDst = ySrc, xDst = xSrc + 1),
+                _ => throw new ArgumentException(nameof(direction))
+            };
 
-                    break;
-                }
-
-                case Direction.Down:
-                {
-                    yNew++;
-
-                    break;
-                }
-
-                case Direction.Left:
-                {
-                    xNew--;
-
-                    break;
-                }
-
-                case Direction.Right:
-                {
-                    xNew++;
-
-                    break;
-                }
-            }
-
-            if (yNew >= 0 && yNew < _playField.GetLength(0))
+            if (yDst >= 0 && yDst < _playField.GetLength(0) && xDst >= 0 && xDst < _playField.GetLength(1))
             {
-                if (xNew >= 0 && xNew < _playField.GetLength(1))
-                {
-                    CellInfo cellInfo = _playField[y, x];
-                    CellInfo cellInfoNew = _playField[yNew, xNew];
+                CellInfo cellInfoSrc = _playField[ySrc, xSrc];
+                CellInfo cellInfoDst = _playField[yDst, xDst];
 
-                    switch (cellInfoNew.CellType)
+                switch (cellInfoDst.CellType)
+                {
+                    case CellType.Empty:
                     {
-                        case CellType.Empty:
+                        Players[cellInfoSrc.Id].FiredBullets++;
+
+                        cellInfoDst.Set(cellInfoSrc.Id, CellType.Bullet, direction, bulletDistance: 1);
+
+                        result = true;
+
+                        break;
+                    }
+
+                    case CellType.Bullet:
+                    {
+                        Players[cellInfoDst.Id].FiredBullets--;
+
+                        cellInfoDst.Set();
+
+                        result = true;
+
+                        break;
+                    }
+
+                    case CellType.Player:
+                    {
+                        Trace.Assert(cellInfoSrc.Id != cellInfoDst.Id);
+
+                        if (cellInfoSrc.Id == 0 || cellInfoDst.Id == 0)
                         {
-                            Players[cellInfo.Id].FiredBullets++;
+                            Players[cellInfoDst.Id].Health = Math.Max(0, Players[cellInfoDst.Id].Health - Players[cellInfoSrc.Id].Damage);
 
-                            cellInfoNew.Set(cellInfo.Id, CellType.Bullet, direction, bulletDistance: 1);
-
-                            break;
-                        }
-
-                        case CellType.Bullet:
-                        {
-                            Players[cellInfoNew.Id].FiredBullets--;
-
-                            cellInfoNew.Set();
-
-                            break;
-                        }
-
-                        case CellType.Player:
-                        {
-                            Trace.Assert(cellInfo.Id != cellInfoNew.Id);
-
-                            if (cellInfo.Id == 0 || cellInfoNew.Id == 0)
+                            if (Players[cellInfoDst.Id].Health == 0)
                             {
-                                Players[cellInfoNew.Id].Health = Math.Max(0, Players[cellInfoNew.Id].Health - Players[cellInfo.Id].Damage);
-
-                                if (Players[cellInfoNew.Id].Health == 0)
-                                {
-                                    cellInfoNew.Set();
-                                }
+                                cellInfoDst.Set();
                             }
 
-                            break;
+                            result = true;
                         }
+
+                        break;
                     }
                 }
             }
+
+            return result;
         }
 
         private (int y, int x) GetPlayerPositionById(int id)
@@ -728,12 +724,9 @@ namespace IsAAAc
             {
                 for (int x = 0; x < _playField.GetLength(1); x++)
                 {
-                    if (_playField[y, x].Id == id)
+                    if (_playField[y, x].Id == id && _playField[y, x].CellType == CellType.Player)
                     {
-                        if (_playField[y, x].CellType == CellType.Player)
-                        {
-                            return (y, x);
-                        }
+                        return (y, x);
                     }
                 }
             }
@@ -747,118 +740,94 @@ namespace IsAAAc
             {
                 for (int bulletDistance = GetMaxBulletDistanceById(id); bulletDistance > 0; bulletDistance--)
                 {
-                    for (int y = 0; y < _playField.GetLength(0); y++)
+                    for (int ySrc = 0; ySrc < _playField.GetLength(0); ySrc++)
                     {
-                        for (int x = 0; x < _playField.GetLength(1); x++)
+                        for (int xSrc = 0; xSrc < _playField.GetLength(1); xSrc++)
                         {
-                            CellInfo cellInfo = _playField[y, x];
+                            CellInfo cellInfoSrc = _playField[ySrc, xSrc];
 
-                            if (cellInfo.Id == id && cellInfo.CellType == CellType.Bullet && cellInfo.BulletDistance == bulletDistance)
+                            if (cellInfoSrc.Id == id && cellInfoSrc.CellType == CellType.Bullet && cellInfoSrc.BulletDistance == bulletDistance)
                             {
-                                if (cellInfo.BulletDistance == Player.MaxBulletDistance)
+                                if (cellInfoSrc.BulletDistance == Player.MaxBulletDistance)
                                 {
-                                    Players[cellInfo.Id].FiredBullets--;
+                                    Players[cellInfoSrc.Id].FiredBullets--;
 
-                                    cellInfo.Set();
+                                    cellInfoSrc.Set();
 
                                     continue;
                                 }
 
-                                int yNew = y, xNew = x;
-
-                                switch (cellInfo.BulletDirection)
+                                (int yDst, int xDst) = cellInfoSrc.BulletDirection switch
                                 {
-                                    case Direction.Up:
-                                    {
-                                        yNew--;
+                                    Direction.Up    => (yDst = ySrc - 1, xSrc),
+                                    Direction.Down  => (yDst = ySrc + 1, xSrc),
+                                    Direction.Left  => (yDst = ySrc, xDst = xSrc - 1),
+                                    Direction.Right => (yDst = ySrc, xDst = xSrc + 1),
+                                    _ => throw new Exception(nameof(cellInfoSrc.BulletDirection))
+                                };
 
-                                        break;
-                                    }
-
-                                    case Direction.Down:
-                                    {
-                                        yNew++;
-
-                                        break;
-                                    }
-
-                                    case Direction.Left:
-                                    {
-                                        xNew--;
-
-                                        break;
-                                    }
-
-                                    case Direction.Right:
-                                    {
-                                        xNew++;
-
-                                        break;
-                                    }
-                                }
-
-                                if (yNew < 0 || yNew >= _playField.GetLength(0) || xNew < 0 || xNew >= _playField.GetLength(1))
+                                if (yDst < 0 || yDst >= _playField.GetLength(0) || xDst < 0 || xDst >= _playField.GetLength(1))
                                 {
-                                    Players[cellInfo.Id].FiredBullets--;
+                                    Players[cellInfoSrc.Id].FiredBullets--;
 
-                                    cellInfo.Set();
+                                    cellInfoSrc.Set();
 
                                     continue;
                                 }
 
-                                CellInfo cellInfoNew = _playField[yNew, xNew];
+                                CellInfo cellInfoDst = _playField[yDst, xDst];
 
-                                switch (cellInfoNew.CellType)
+                                switch (cellInfoDst.CellType)
                                 {
                                     case CellType.Empty:
                                     {
-                                        cellInfoNew.Set(cellInfo);
-                                        cellInfoNew.BulletDistance++;
+                                        cellInfoDst.Set(cellInfoSrc);
+                                        cellInfoDst.BulletDistance++;
 
-                                        cellInfo.Set();
+                                        cellInfoSrc.Set();
 
                                         break;
                                     }
 
                                     case CellType.Obstacle:
                                     {
-                                        Players[cellInfo.Id].FiredBullets--;
+                                        Players[cellInfoSrc.Id].FiredBullets--;
 
-                                        cellInfo.Set();
+                                        cellInfoSrc.Set();
 
                                         break;
                                     }
 
                                     case CellType.Bullet:
                                     {
-                                        Trace.Assert(cellInfo.Id != cellInfoNew.Id);
+                                        Trace.Assert(cellInfoSrc.Id != cellInfoDst.Id);
 
-                                        Players[cellInfo.Id].FiredBullets--;
-                                        Players[cellInfoNew.Id].FiredBullets--;
+                                        Players[cellInfoSrc.Id].FiredBullets--;
+                                        Players[cellInfoDst.Id].FiredBullets--;
 
-                                        cellInfo.Set();
-                                        cellInfoNew.Set();
+                                        cellInfoSrc.Set();
+                                        cellInfoDst.Set();
 
                                         break;
                                     }
 
                                     case CellType.Player:
                                     {
-                                        Trace.Assert(cellInfo.Id != cellInfoNew.Id);
+                                        Trace.Assert(cellInfoSrc.Id != cellInfoDst.Id);
 
-                                        Players[cellInfo.Id].FiredBullets--;
+                                        Players[cellInfoSrc.Id].FiredBullets--;
 
-                                        if (cellInfo.Id == 0 || cellInfoNew.Id == 0)
+                                        if (cellInfoSrc.Id == 0 || cellInfoDst.Id == 0)
                                         {
-                                            Players[cellInfoNew.Id].Health = Math.Max(0, Players[cellInfoNew.Id].Health - Players[cellInfo.Id].Damage);
+                                            Players[cellInfoDst.Id].Health = Math.Max(0, Players[cellInfoDst.Id].Health - Players[cellInfoSrc.Id].Damage);
 
-                                            if (Players[cellInfoNew.Id].Health == 0)
+                                            if (Players[cellInfoDst.Id].Health == 0)
                                             {
-                                                cellInfoNew.Set();
+                                                cellInfoDst.Set();
                                             }
                                         }
 
-                                        cellInfo.Set();
+                                        cellInfoSrc.Set();
 
                                         break;
                                     }
@@ -880,12 +849,9 @@ namespace IsAAAc
                 {
                     CellInfo cellInfo = _playField[y, x];
 
-                    if (cellInfo.Id == id)
+                    if (cellInfo.Id == id && cellInfo.CellType == CellType.Bullet)
                     {
-                        if (cellInfo.CellType == CellType.Bullet)
-                        {
-                            maxBulletDistance = Math.Max(maxBulletDistance, cellInfo.BulletDistance);
-                        }
+                        maxBulletDistance = Math.Max(maxBulletDistance, cellInfo.BulletDistance);
                     }
                 }
             }
