@@ -13,7 +13,7 @@ namespace IsAAAc
         public const int WindowHeight = 40; // Even.
 
         public static void Main(string[] args)
-        {            
+        {
             Console.Title = Title;
 
             Console.OutputEncoding = System.Text.Encoding.Unicode;
@@ -33,7 +33,7 @@ namespace IsAAAc
 
             Room room = new();
 
-            room.Print((DoorsState)(new Random().Next(0, 16)));
+            room.Print((DoorsState)(new Random().Next(0, 16))); // TODO: .
 
             PlayField playField = new(room);
 
@@ -59,11 +59,13 @@ namespace IsAAAc
             Random rndWeight = new();
             Random rndDirection = new();
 
+            const int FrameTime = 20 * 3; // ms.
+
+            int frameTime = FrameTime;
+
             Stopwatch sW = new();
 
             bool exit = false;
-
-            int frameTime = 20 * 3; // ms.
 
             while (true)
             {
@@ -213,16 +215,23 @@ namespace IsAAAc
                             break;
                         }
 
-                        case ConsoleKey.OemPlus:
+                        case ConsoleKey.OemPlus when cKI.Modifiers.HasFlag(ConsoleModifiers.Control):
                         {
-                            frameTime = Math.Clamp(((frameTime / 3) - 1) * 3, 1, 1000);
+                            frameTime = Math.Clamp(frameTime - 3, 3, 999);
 
                             break;
                         }
 
-                        case ConsoleKey.OemMinus:
+                        case ConsoleKey.OemMinus when cKI.Modifiers.HasFlag(ConsoleModifiers.Control):
                         {
-                            frameTime = Math.Clamp(((frameTime / 3) + 1) * 3, 1, 1000);
+                            frameTime = Math.Clamp(frameTime + 3, 3, 999);
+
+                            break;
+                        }
+
+                        case ConsoleKey.NumPad0 when cKI.Modifiers.HasFlag(ConsoleModifiers.Control):
+                        {
+                            frameTime = FrameTime;
 
                             break;
                         }
@@ -285,9 +294,9 @@ namespace IsAAAc
             Console.ResetColor();
         }
 
-        public static void PrintPlayersStats(List<Player> players, int frameTime = 1)
+        public static void PrintPlayersStats(List<Player> players, int frameTime = 0)
         {
-            int fps = (int)(1f / ((float)frameTime / 1000f));
+            int fps = frameTime != 0 ? (int)(1f / ((float)frameTime / 1000f)) : 0;
 
             int playerHealth = 0;
             int enemiesHealth = 0;
@@ -351,22 +360,23 @@ namespace IsAAAc
         }
     }
 
+    [Flags]
+    public enum DoorsState
+    {
+        None = 0,
+
+        Up    = 1 << 0,
+        Right = 1 << 1,
+        Down  = 1 << 2,
+        Left  = 1 << 3
+    }
+
     public enum GameOver { None, YouWin, YouLose }
 
     public enum CellType { Empty, Obstacle, Bullet, Player }
 
     public enum Action { Stay, Move, Fire }
     public enum Direction { None, Up, Right, Down, Left }
-    
-    [Flags]
-    public enum DoorsState
-    {
-        None = 0,
-        Up = 1, // 1 << 0
-        Right = 2, //1 << 1
-        Down = 4, // 1 << 2
-        Left = 8 // 1 << 3
-    }
 
     public class CellInfo : IEquatable<CellInfo>
     {
