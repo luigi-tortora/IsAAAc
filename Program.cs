@@ -65,11 +65,9 @@ namespace IsAAAc
 
             Stopwatch sW = new();
 
-            bool exit = false;
-
             while (true)
             {
-                if (exit || GetGameOverState(playField.Players) != GameOver.None)
+                if (playField.State == State.Exit || GetGameOverState(playField.Players) != GameOver.None)
                 {
                     break;
                 }
@@ -106,7 +104,7 @@ namespace IsAAAc
 
                 Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
 
-                if (exit || GetGameOverState(playField.Players) != GameOver.None)
+                if (playField.State == State.Exit || GetGameOverState(playField.Players) != GameOver.None)
                 {
                     break;
                 }
@@ -210,7 +208,7 @@ namespace IsAAAc
 
                         case ConsoleKey.Escape:
                         {
-                            exit = true;
+                            playField.State = State.Exit;
 
                             break;
                         }
@@ -245,7 +243,7 @@ namespace IsAAAc
 
                 Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
 
-                if (exit || GetGameOverState(playField.Players) != GameOver.None)
+                if (playField.State == State.Exit || GetGameOverState(playField.Players) != GameOver.None)
                 {
                     break;
                 }
@@ -262,9 +260,14 @@ namespace IsAAAc
                 Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
             }
 
-            if (!exit)
+            if (playField.State == State.Exit)
             {
                 playField.RemoveAllBullets();
+                
+                if (GetGameOverState(playField.Players) == GameOver.YouWin)
+                {
+                    playField.PlaceKey();
+                }
 
                 Console.Title = $"{Title} [GameOver: {GetGameOverState(playField.Players)}]";
                 playField.Print();
@@ -373,7 +376,7 @@ namespace IsAAAc
 
     public enum GameOver { None, YouWin, YouLose }
 
-    public enum CellType { Empty, Obstacle, Bullet, Player }
+    public enum CellType { Empty, Obstacle, Bullet, Player, Key }
 
     public enum Action { Stay, Move, Fire }
     public enum Direction { None, Up, Right, Down, Left }
@@ -511,6 +514,8 @@ namespace IsAAAc
         }
     }
 
+    public enum State { None, WaitingKey, Win, Lose, Exit }
+
     public class PlayField
     {
         public const int ObstaclesPerPlayer = 2;
@@ -518,6 +523,8 @@ namespace IsAAAc
         public const int MaxPlayersCount = 1 + 20;
 
         public List<Player> Players { get; }
+
+        public State State { get; set; }
 
         private readonly CellInfo[,] _playField;
         private readonly CellInfo[,] _playFieldOld;
@@ -580,6 +587,24 @@ namespace IsAAAc
                     _playField[y, x].Set(player.Id, CellType.Player);
 
                     Players.Add(player);
+
+                    return;
+                }
+            }
+        }
+
+        public void PlaceKey()
+        {
+            Random rnd = new();
+
+            while (true)
+            {
+                int y = rnd.Next(0, _playField.GetLength(0));
+                int x = rnd.Next(0, _playField.GetLength(1));
+
+                if (_playField[y, x].CellType == CellType.Empty)
+                {
+                    _playField[y, x].Set(cellType: CellType.Key);
 
                     return;
                 }
@@ -784,13 +809,27 @@ namespace IsAAAc
 
                             if (cellInfoSrc.Id == id && cellInfoSrc.CellType == CellType.Bullet && cellInfoSrc.BulletDistance == bulletDistance)
                             {
-                                if (cellInfoSrc.BulletDistance == Player.MaxBulletDistance)
+                                if (cellInfoSrc.BulletDirection == Direction.Left || cellInfoSrc.BulletDirection == Direction.Right)
                                 {
-                                    Players[cellInfoSrc.Id].FiredBullets--;
+                                    if (cellInfoSrc.BulletDistance == Player.MaxBulletDistance)
+                                    {
+                                        Players[cellInfoSrc.Id].FiredBullets--;
 
-                                    cellInfoSrc.Set();
+                                        cellInfoSrc.Set();
 
-                                    continue;
+                                        continue;
+                                    }
+                                }
+                                else if (cellInfoSrc.BulletDirection == Direction.Up || cellInfoSrc.BulletDirection == Direction.Down)
+                                {
+                                    if (cellInfoSrc.BulletDistance == Player.MaxBulletDistance / 2)
+                                    {
+                                        Players[cellInfoSrc.Id].FiredBullets--;
+
+                                        cellInfoSrc.Set();
+
+                                        continue;
+                                    }
                                 }
 
                                 (int yDst, int xDst) = cellInfoSrc.BulletDirection switch
@@ -949,6 +988,13 @@ namespace IsAAAc
                                 case CellType.Player:
                                 {
                                     Program.Write(Player.GetStringById(cellInfo.Id), x + _room.Left + 1, y + _room.Top + 1, Player.GetColorById(cellInfo.Id));
+
+                                    break;
+                                }
+
+                                case CellType.Key:
+                                {
+                                    Program.Write("▲", x + _room.Left + 1, y + _room.Top + 1, ConsoleColor.Green);
 
                                     break;
                                 }
