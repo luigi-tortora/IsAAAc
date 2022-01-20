@@ -39,25 +39,22 @@ namespace IsAAAc
 
             int playersCount = new Random().Next(2, PlayField.MaxPlayersCount + 1);
 
-            playField.PlaceObstacle(count: playersCount * PlayField.ObstaclesPerPlayer);
+            playField.TryPlaceObstacle(count: playersCount * PlayField.ObstaclesPerPlayer);
 
             for (int id = 0; id < playersCount; id++)
             {
                 if (id == 0)
                 {
-                    playField.PlacePlayer(new(id));
+                    playField.TryPlacePlayer(new(id));
                 }
                 else
                 {
-                    playField.PlacePlayer(new(id));
+                    playField.TryPlacePlayer(new(id));
                 }
             }
 
             PrintPlayersStats(playField.Players);
             playField.Print();
-
-            Random rndWeight = new();
-            Random rndDirection = new();
 
             const int FrameTime = 20 * 3; // ms.
 
@@ -65,9 +62,11 @@ namespace IsAAAc
 
             Stopwatch sW = new();
 
+            bool exit = false;
+
             while (true)
             {
-                if (playField.State == State.Exit || GetGameOverState(playField.Players) != GameOver.None)
+                if (exit || playField.GetGameOverState() != GameOver.None)
                 {
                     break;
                 }
@@ -76,8 +75,8 @@ namespace IsAAAc
 
                 for (int id = playersCount - 1; id > 0; id--)
                 {
-                    Action action = playField.Players[id].GetActionByWeight(rndWeight.Next(1, 101));
-                    Direction direction = (Direction)rndDirection.Next((int)Direction.Up, (int)Direction.Left + 1);
+                    Action action = playField.Players[id].GetNextAction();
+                    Direction direction = playField.Players[id].GetNextDirection(playField);
 
                     switch (action)
                     {
@@ -104,7 +103,7 @@ namespace IsAAAc
 
                 Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
 
-                if (playField.State == State.Exit || GetGameOverState(playField.Players) != GameOver.None)
+                if (exit || playField.GetGameOverState() != GameOver.None)
                 {
                     break;
                 }
@@ -206,13 +205,6 @@ namespace IsAAAc
                             break;
                         }
 
-                        case ConsoleKey.Escape:
-                        {
-                            playField.State = State.Exit;
-
-                            break;
-                        }
-
                         case ConsoleKey.OemPlus when cKI.Modifiers.HasFlag(ConsoleModifiers.Control):
                         {
                             frameTime = Math.Clamp(frameTime - 3, 3, 999);
@@ -233,6 +225,13 @@ namespace IsAAAc
 
                             break;
                         }
+
+                        case ConsoleKey.Escape:
+                        {
+                            exit = true;
+
+                            break;
+                        }
                     }
                 }
 
@@ -243,7 +242,7 @@ namespace IsAAAc
 
                 Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
 
-                if (playField.State == State.Exit || GetGameOverState(playField.Players) != GameOver.None)
+                if (exit || playField.GetGameOverState() != GameOver.None)
                 {
                     break;
                 }
@@ -260,16 +259,11 @@ namespace IsAAAc
                 Thread.Sleep(Math.Max(0, frameTime / 3 - (int)sW.ElapsedMilliseconds));
             }
 
-            if (playField.State == State.Exit)
+            if (!exit)
             {
                 playField.RemoveAllBullets();
-                
-                if (GetGameOverState(playField.Players) == GameOver.YouWin)
-                {
-                    playField.PlaceKey();
-                }
 
-                Console.Title = $"{Title} [GameOver: {GetGameOverState(playField.Players)}]";
+                Console.Title = $"{Title} [GameOver: {playField.GetGameOverState()}]";
                 playField.Print();
 
                 while (Console.ReadKey(true).Key != ConsoleKey.Escape);
@@ -283,17 +277,6 @@ namespace IsAAAc
             Console.TreatControlCAsInput = false;
 
             Console.Clear();
-            Console.ResetColor();
-        }
-
-        public static void Write(string str, int left, int top, ConsoleColor fColor = ConsoleColor.Gray, ConsoleColor bColor = ConsoleColor.Black)
-        {
-            Console.ForegroundColor = fColor;
-            Console.BackgroundColor = bColor;
-
-            Console.SetCursorPosition(left, top);
-            Console.Write(str);
-
             Console.ResetColor();
         }
 
@@ -326,35 +309,15 @@ namespace IsAAAc
             Console.Title = $"{Title} [FPS: {fps}] [Player Health: {playerHealth}] [Enemies Health: {enemiesHealth}] [Enemies: {enemies}]";
         }
 
-        public static GameOver GetGameOverState(List<Player> players)
+        public static void Write(string str, int left, int top, ConsoleColor fColor = ConsoleColor.Gray, ConsoleColor bColor = ConsoleColor.Black)
         {
-            int playerHealth = 0;
-            int enemiesHealth = 0;
+            Console.ForegroundColor = fColor;
+            Console.BackgroundColor = bColor;
 
-            foreach (Player player in players)
-            {
-                if (player.Id == 0)
-                {
-                    playerHealth = player.Health;
-                }
-                else
-                {
-                    enemiesHealth += player.Health;
-                }
-            }
+            Console.SetCursorPosition(left, top);
+            Console.Write(str);
 
-            if (playerHealth == 0)
-            {
-                return GameOver.YouLose;
-            }
-            else if (enemiesHealth == 0)
-            {
-                return GameOver.YouWin;
-            }
-            else
-            {
-                return GameOver.None;
-            }
+            Console.ResetColor();
         }
 
         private static void BeepAsync(int frequency = 800, int duration = 200)
@@ -376,9 +339,9 @@ namespace IsAAAc
 
     public enum GameOver { None, YouWin, YouLose }
 
-    public enum CellType { Empty, Obstacle, Bullet, Player, Key }
+    public enum CellType { Empty, Obstacle, Bullet, Player }
 
-    public enum Action { Stay, Move, Fire }
+    public enum Action { None, Stay, Move, Fire }
     public enum Direction { None, Up, Right, Down, Left }
 
     public class CellInfo : IEquatable<CellInfo>
@@ -514,17 +477,13 @@ namespace IsAAAc
         }
     }
 
-    public enum State { None, WaitingKey, Win, Lose, Exit }
-
     public class PlayField
     {
         public const int ObstaclesPerPlayer = 2;
 
-        public const int MaxPlayersCount = 1 + 20;
+        public const int MaxPlayersCount = 1 + 15;
 
         public List<Player> Players { get; }
-
-        public State State { get; set; }
 
         private readonly CellInfo[,] _playField;
         private readonly CellInfo[,] _playFieldOld;
@@ -555,11 +514,13 @@ namespace IsAAAc
             }
         }
 
-        public void PlaceObstacle(int count)
+        public bool TryPlaceObstacle(int count)
         {
+            int attempts = _playField.GetLength(0) * _playField.GetLength(1) * count;
+
             Random rnd = new();
 
-            while (count != 0)
+            while (count != 0 && attempts-- != 0)
             {
                 int y = rnd.Next(0, _playField.GetLength(0));
                 int x = rnd.Next(0, _playField.GetLength(1));
@@ -571,13 +532,17 @@ namespace IsAAAc
                     count--;
                 }
             }
+
+            return attempts != -1;
         }
 
-        public void PlacePlayer(Player player)
+        public bool TryPlacePlayer(Player player)
         {
+            int attempts = _playField.GetLength(0) * _playField.GetLength(1);
+
             Random rnd = new();
 
-            while (true)
+            while (attempts-- != 0)
             {
                 int y = rnd.Next(0, _playField.GetLength(0));
                 int x = rnd.Next(0, _playField.GetLength(1));
@@ -588,27 +553,73 @@ namespace IsAAAc
 
                     Players.Add(player);
 
-                    return;
+                    break;
                 }
             }
+
+            return attempts != -1;
         }
 
-        public void PlaceKey()
+        public bool TryGetPointingDirectionsBySrcAndDstId(int srcId, int dstId, out List<Direction> pointingDirections)
         {
-            Random rnd = new();
-
-            while (true)
+            if (srcId == dstId || Players[srcId].Health == 0 || Players[dstId].Health == 0)
             {
-                int y = rnd.Next(0, _playField.GetLength(0));
-                int x = rnd.Next(0, _playField.GetLength(1));
+                pointingDirections = default;
 
-                if (_playField[y, x].CellType == CellType.Empty)
+                return false;
+            }
+
+            pointingDirections = new();
+
+            (int ySrc, int xSrc) = GetPlayerPositionById(srcId);
+            (int yDst, int xDst) = GetPlayerPositionById(dstId);
+
+            if (ySrc == yDst)
+            {
+                if (xSrc < xDst)
                 {
-                    _playField[y, x].Set(cellType: CellType.Key);
-
-                    return;
+                    pointingDirections.Add(Direction.Right);
+                }
+                else if (xSrc > xDst)
+                {
+                    pointingDirections.Add(Direction.Left);
                 }
             }
+            else if (xSrc == xDst)
+            {
+                if (ySrc < yDst)
+                {
+                    pointingDirections.Add(Direction.Down);
+                }
+                else if (ySrc > yDst)
+                {
+                    pointingDirections.Add(Direction.Up);
+                }
+            }
+            else if (xSrc > xDst && ySrc < yDst) // Q1.
+            {
+                pointingDirections.Add(Direction.Left);
+                pointingDirections.Add(Direction.Down);
+            }
+            else if (xSrc < xDst && ySrc < yDst) // Q2.
+            {
+                pointingDirections.Add(Direction.Right);
+                pointingDirections.Add(Direction.Down);
+            }
+            else if (xSrc < xDst && ySrc > yDst) // Q3.
+            {
+                pointingDirections.Add(Direction.Right);
+                pointingDirections.Add(Direction.Up);
+            }
+            else if (xSrc > xDst && ySrc > yDst) // Q4.
+            {
+                pointingDirections.Add(Direction.Left);
+                pointingDirections.Add(Direction.Up);
+            }
+
+            Trace.Assert(pointingDirections.Count != 0);
+
+            return true;
         }
 
         public bool TryMovePlayerById(int id, Direction direction)
@@ -797,6 +808,9 @@ namespace IsAAAc
 
         public void UpdateBulletsState()
         {
+            static bool IsDirectionH(Direction direction) => direction == Direction.Right || direction == Direction.Left;
+            static bool IsDirectionV(Direction direction) => direction == Direction.Up    || direction == Direction.Down;
+
             for (int id = Players.Count - 1; id >= 0; id--)
             {
                 for (int bulletDistance = GetMaxBulletDistanceById(id); bulletDistance > 0; bulletDistance--)
@@ -809,27 +823,14 @@ namespace IsAAAc
 
                             if (cellInfoSrc.Id == id && cellInfoSrc.CellType == CellType.Bullet && cellInfoSrc.BulletDistance == bulletDistance)
                             {
-                                if (cellInfoSrc.BulletDirection == Direction.Left || cellInfoSrc.BulletDirection == Direction.Right)
+                                if (IsDirectionH(cellInfoSrc.BulletDirection) && cellInfoSrc.BulletDistance == Player.MaxBulletDistanceH ||
+                                    IsDirectionV(cellInfoSrc.BulletDirection) && cellInfoSrc.BulletDistance == Player.MaxBulletDistanceV)
                                 {
-                                    if (cellInfoSrc.BulletDistance == Player.MaxBulletDistance)
-                                    {
-                                        Players[cellInfoSrc.Id].FiredBullets--;
+                                    Players[cellInfoSrc.Id].FiredBullets--;
 
-                                        cellInfoSrc.Set();
+                                    cellInfoSrc.Set();
 
-                                        continue;
-                                    }
-                                }
-                                else if (cellInfoSrc.BulletDirection == Direction.Up || cellInfoSrc.BulletDirection == Direction.Down)
-                                {
-                                    if (cellInfoSrc.BulletDistance == Player.MaxBulletDistance / 2)
-                                    {
-                                        Players[cellInfoSrc.Id].FiredBullets--;
-
-                                        cellInfoSrc.Set();
-
-                                        continue;
-                                    }
+                                    continue;
                                 }
 
                                 (int yDst, int xDst) = cellInfoSrc.BulletDirection switch
@@ -948,6 +949,37 @@ namespace IsAAAc
             }
         }
 
+        public GameOver GetGameOverState()
+        {
+            int playerHealth = 0;
+            int enemiesHealth = 0;
+
+            foreach (Player player in Players)
+            {
+                if (player.Id == 0)
+                {
+                    playerHealth = player.Health;
+                }
+                else
+                {
+                    enemiesHealth += player.Health;
+                }
+            }
+
+            if (playerHealth == 0)
+            {
+                return GameOver.YouLose;
+            }
+            else if (enemiesHealth == 0)
+            {
+                return GameOver.YouWin;
+            }
+            else
+            {
+                return GameOver.None;
+            }
+        }
+
         public void Print()
         {
             lock (_playFieldOld)
@@ -991,13 +1023,6 @@ namespace IsAAAc
 
                                     break;
                                 }
-
-                                case CellType.Key:
-                                {
-                                    Program.Write("▲", x + _room.Left + 1, y + _room.Top + 1, ConsoleColor.Green);
-
-                                    break;
-                                }
                             }
                         }
                     }
@@ -1012,7 +1037,8 @@ namespace IsAAAc
         public const int DefaultDamage = 1;
 
         public const int MaxFireableBullets = 5;
-        public const int MaxBulletDistance = 20;
+        public const int MaxBulletDistanceH = 20;
+        public const int MaxBulletDistanceV = 20;
 
         public int Id { get; }
 
@@ -1021,7 +1047,11 @@ namespace IsAAAc
 
         public int FiredBullets { get; set; }
 
+        private Random _rndWeight;
+        private Random _rndDirection;
+
         private (int stayWeight, int moveWeight, int fireWeight) _actionWeights;
+        private (int randomWeight, int pointingWeight) _directionWeights;
 
         public Player(int id, int health = Defaulthealth, int damage = DefaultDamage)
         {
@@ -1032,39 +1062,91 @@ namespace IsAAAc
 
             if (id != 0)
             {
+                _rndWeight = new();
+                _rndDirection = new();
+
                 GenerateActionWeights();
+                GenerateDirectionWeights();
             }
         }
 
         private void GenerateActionWeights()
         {
-            Random rnd = new();
-
             do
             {
-                _actionWeights.stayWeight = rnd.Next(1, 101);
-                _actionWeights.moveWeight = rnd.Next(1, 101);
-                _actionWeights.fireWeight = rnd.Next(1, 101);
+                _actionWeights.stayWeight = _rndWeight.Next(1, 101);
+                _actionWeights.moveWeight = _rndWeight.Next(1, 101);
+                _actionWeights.fireWeight = _rndWeight.Next(1, 101);
             }
             while (_actionWeights.stayWeight + _actionWeights.moveWeight + _actionWeights.fireWeight != 100);
         }
 
-        public Action GetActionByWeight(int weight)
+        private void GenerateDirectionWeights()
         {
+            do
+            {
+                _directionWeights.randomWeight   = _rndWeight.Next(1, 101);
+                _directionWeights.pointingWeight = _rndWeight.Next(1, 101);
+            }
+            while (_directionWeights.randomWeight + _directionWeights.pointingWeight != 100);
+        }
+
+        public Action GetNextAction()
+        {
+            Action action = Action.None;
+
+            int weight = _rndWeight.Next(1, 101);
+
             if (weight >= 1 && weight <= _actionWeights.stayWeight)
             {
-                return Action.Stay;
+                action = Action.Stay;
             }
             else if (weight > _actionWeights.stayWeight && weight <= _actionWeights.stayWeight + _actionWeights.moveWeight)
             {
-                return Action.Move;
+                action = Action.Move;
             }
             else if (weight > _actionWeights.stayWeight + _actionWeights.moveWeight && weight <= 100)
             {
-                return Action.Fire;
+                action = Action.Fire;
             }
 
-            throw new ArgumentException(nameof(weight));
+            Trace.Assert(action != Action.None);
+
+            return action;
+        }
+
+        public Direction GetNextDirection(PlayField playField)
+        {
+            Direction direction = Direction.None;
+
+            int weight = _rndWeight.Next(1, 101);
+
+            if (weight >= 1 && weight <= _directionWeights.randomWeight)
+            {
+                direction = (Direction)_rndDirection.Next((int)Direction.Up, (int)Direction.Left + 1);
+            }
+            else if (weight > _directionWeights.randomWeight && weight <= 100)
+            {
+                if (playField.TryGetPointingDirectionsBySrcAndDstId(srcId: Id, dstId: 0, out List<Direction> pointingDirections))
+                {
+                    if (pointingDirections.Count == 1)
+                    {
+                        direction = pointingDirections[0];
+                    }
+                    else if (pointingDirections.Count == 2)
+                    {
+                        direction = pointingDirections[_rndDirection.Next(0, 2)];
+                    }
+                }
+                else
+                {
+                    direction = (Direction)_rndDirection.Next((int)Direction.Up, (int)Direction.Left + 1);
+                }
+            }
+
+            Trace.Assert(direction != Direction.None);
+
+            return direction;
         }
 
         public static string GetStringById(int id)
