@@ -33,7 +33,7 @@ namespace IsAAAc
 
             Room room = new();
 
-            room.Print((DoorsState)(new Random().Next(0, 16))); // TODO: .
+            room.Print((DoorsState)(new Random().Next(0, 16)));
 
             PlayField playField = new(room);
 
@@ -45,11 +45,11 @@ namespace IsAAAc
             {
                 if (id == 0)
                 {
-                    playField.TryPlacePlayer(new(id));
+                    playField.TryPlacePlayer(new(id, health: 15));
                 }
                 else
                 {
-                    playField.TryPlacePlayer(new(id));
+                    playField.TryPlacePlayer(new(id, health: 5));
                 }
             }
 
@@ -416,21 +416,23 @@ namespace IsAAAc
         public int Width { get; private set; }
         public int Height { get; private set; }
 
+        private readonly Random _rndGenerate;
+
         public Room()
         {
             Id++;
+
+            _rndGenerate = new();
 
             Generate();
         }
 
         private void Generate()
         {
-            Random rnd = new();
-
             do
             {
-                Width = rnd.Next(DoorWidth * 3, Program.WindowWidth - 1);
-                Height = rnd.Next(DoorHeight * 3, Program.WindowHeight - 1);
+                Width = _rndGenerate.Next(DoorWidth * 3, Program.WindowWidth - 1);
+                Height = _rndGenerate.Next(DoorHeight * 3, Program.WindowHeight - 1);
             }
             while (Width % 2 != 0 || Height % 2 != 0);
 
@@ -490,6 +492,8 @@ namespace IsAAAc
 
         private readonly Room _room;
 
+        private readonly Random _rndPlace;
+
         public PlayField(Room room)
         {
             _playField = new CellInfo[room.Height - 2, room.Width - 2];
@@ -499,6 +503,8 @@ namespace IsAAAc
             Init(_playFieldOld);
 
             _room = room;
+
+            _rndPlace = new();
 
             Players = new();
         }
@@ -518,12 +524,10 @@ namespace IsAAAc
         {
             int attempts = _playField.GetLength(0) * _playField.GetLength(1) * count;
 
-            Random rnd = new();
-
             while (count != 0 && attempts-- != 0)
             {
-                int y = rnd.Next(0, _playField.GetLength(0));
-                int x = rnd.Next(0, _playField.GetLength(1));
+                int y = _rndPlace.Next(0, _playField.GetLength(0));
+                int x = _rndPlace.Next(0, _playField.GetLength(1));
 
                 if (_playField[y, x].CellType == CellType.Empty)
                 {
@@ -540,12 +544,10 @@ namespace IsAAAc
         {
             int attempts = _playField.GetLength(0) * _playField.GetLength(1);
 
-            Random rnd = new();
-
             while (attempts-- != 0)
             {
-                int y = rnd.Next(0, _playField.GetLength(0));
-                int x = rnd.Next(0, _playField.GetLength(1));
+                int y = _rndPlace.Next(0, _playField.GetLength(0));
+                int x = _rndPlace.Next(0, _playField.GetLength(1));
 
                 if (_playField[y, x].CellType == CellType.Empty)
                 {
@@ -569,10 +571,10 @@ namespace IsAAAc
                 return false;
             }
 
-            pointingDirections = new();
-
             (int ySrc, int xSrc) = GetPlayerPositionById(srcId);
             (int yDst, int xDst) = GetPlayerPositionById(dstId);
+
+            pointingDirections = new();
 
             if (ySrc == yDst)
             {
@@ -1047,8 +1049,10 @@ namespace IsAAAc
 
         public int FiredBullets { get; set; }
 
-        private Random _rndWeight;
-        private Random _rndDirection;
+        private readonly Random _rndWeightGenerate;
+
+        private readonly Random _rndWeightNext;
+        private readonly Random _rndDirection;
 
         private (int stayWeight, int moveWeight, int fireWeight) _actionWeights;
         private (int randomWeight, int pointingWeight) _directionWeights;
@@ -1062,11 +1066,13 @@ namespace IsAAAc
 
             if (id != 0)
             {
-                _rndWeight = new();
-                _rndDirection = new();
+                _rndWeightGenerate = new();
 
                 GenerateActionWeights();
                 GenerateDirectionWeights();
+
+                _rndWeightNext = new();
+                _rndDirection = new();
             }
         }
 
@@ -1074,9 +1080,9 @@ namespace IsAAAc
         {
             do
             {
-                _actionWeights.stayWeight = _rndWeight.Next(1, 101);
-                _actionWeights.moveWeight = _rndWeight.Next(1, 101);
-                _actionWeights.fireWeight = _rndWeight.Next(1, 101);
+                _actionWeights.stayWeight = _rndWeightGenerate.Next(1, 101);
+                _actionWeights.moveWeight = _rndWeightGenerate.Next(1, 101);
+                _actionWeights.fireWeight = _rndWeightGenerate.Next(1, 101);
             }
             while (_actionWeights.stayWeight + _actionWeights.moveWeight + _actionWeights.fireWeight != 100);
         }
@@ -1085,8 +1091,8 @@ namespace IsAAAc
         {
             do
             {
-                _directionWeights.randomWeight   = _rndWeight.Next(1, 101);
-                _directionWeights.pointingWeight = _rndWeight.Next(1, 101);
+                _directionWeights.randomWeight   = _rndWeightGenerate.Next(1, 101);
+                _directionWeights.pointingWeight = _rndWeightGenerate.Next(1, 101);
             }
             while (_directionWeights.randomWeight + _directionWeights.pointingWeight != 100);
         }
@@ -1095,7 +1101,7 @@ namespace IsAAAc
         {
             Action action = Action.None;
 
-            int weight = _rndWeight.Next(1, 101);
+            int weight = _rndWeightNext.Next(1, 101);
 
             if (weight >= 1 && weight <= _actionWeights.stayWeight)
             {
@@ -1119,7 +1125,7 @@ namespace IsAAAc
         {
             Direction direction = Direction.None;
 
-            int weight = _rndWeight.Next(1, 101);
+            int weight = _rndWeightNext.Next(1, 101);
 
             if (weight >= 1 && weight <= _directionWeights.randomWeight)
             {
